@@ -3,7 +3,6 @@ namespace Bling\Pedido;
 
 use Bling\Bling;
 /**
- * Class Produtos
  *
  * Essa classe é resposavel por lidar com os pedidos dentro do Bling.
  *

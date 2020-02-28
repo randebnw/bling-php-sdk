@@ -3,7 +3,6 @@ namespace Bling\Produto;
 
 use Bling\Bling;
 /**
- * Class Produtos
  *
  * Essa classe é resposavel por lidar com os produtos dentro do Bling.
  *
