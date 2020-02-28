@@ -1,5 +1,5 @@
 {
-    "name": "eunarede/bling-php-sdk",
+    "name": "randebnw/bling-php-sdk",
     "description": "SDK PHP para Bling ERP",
     "type": "library",
     "require": {
@@ -21,6 +21,10 @@
         {
             "name": "Andre Bellafronte",
             "email": "andre@eunarede.com"
+        },
+        {
+            "name": "Rande Arievilo",
+            "email": "rande@adok.com.br"
         }
     ],
     "autoload": {
