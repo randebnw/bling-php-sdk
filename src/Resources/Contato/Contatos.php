@@ -5,8 +5,7 @@ use Bling\Bling;
 /**
  * Class Contatos
  *
- * Essa classe é resposavel por lidar com os contatos
- * dentro do Bling.
+ * Essa classe é resposavel por lidar com os contatos dentro do Bling.
  *
  * @package Bling\Contato
  * @author Andre Bellafronte <andre@eunarede.com>
