@@ -1,5 +1,5 @@
 <?php
-namespace Bling\Contato;
+namespace Bling\Resources;
 
 use Bling\Core\Bling;
 
@@ -12,7 +12,7 @@ use Bling\Core\Bling;
  * @author Andre Bellafronte <andre@eunarede.com>
  * @version 1.0.0
  */
-class Contatos extends Bling
+class Contato extends Bling
 {
     public function __construct($configurations)
     {

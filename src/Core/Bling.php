@@ -42,10 +42,10 @@ abstract class Bling
     private function getBundles()
     {
         return [
-            Contato\Contatos::class,
-        	Deposito\Depositos::class,
-       		Produto\Produtos::class,
-       		Pedido\Pedidos::class
+            \Bling\Resources\Contato::class,
+        	\Bling\Resources\Deposito::class,
+       		\Bling\Resources\Produto::class,
+       		\Bling\Resources\Pedido::class
         ];
     }
 

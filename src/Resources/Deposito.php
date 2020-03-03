@@ -1,5 +1,5 @@
 <?php
-namespace Bling\Deposito;
+namespace Bling\Resources;
 
 use Bling\Core\Bling;
 /**
@@ -11,7 +11,7 @@ use Bling\Core\Bling;
  * @see https://manuais.bling.com.br/manual/?item=depositos
  * @version 1.0.0
  */
-class Depositos extends Bling
+class Deposito extends Bling
 {
     public function __construct($configurations) {
         parent::__construct($configurations);
