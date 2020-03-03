@@ -40,13 +40,10 @@ class Config
             ],
             'guzzle' => [
                 'base_url' => 'https://bling.com.br/Api/v2/',
-            	'defaults' => ['verify' => (defined('OASIS_DEBUG') && OASIS_DEBUG) ? false : true],
+            	'defaults' => ['query' => ['apikey' => $token], 'verify' => (defined('OASIS_DEBUG') && OASIS_DEBUG) ? false : true],
                 'timeout' => 30,
                 'headers' => [
                     'User-Agent' => 'BNW/1.0'
-                ],
-                'query' => [
-                  'apikey' => $token
                 ]
             ]
         ];
