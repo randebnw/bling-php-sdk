@@ -1,7 +1,7 @@
 <?php
 namespace Bling\Produto;
 
-use Bling\Bling;
+use Bling\Core\Bling;
 /**
  *
  * Essa classe é resposavel por lidar com os produtos dentro do Bling.

@@ -1,7 +1,10 @@
 <?php
-namespace Bling;
+namespace Bling\Core;
 
 use Bling\Deposito\Depositos;
+use Bling\Contato\Contatos;
+use Bling\Produto\Produtos;
+use Bling\Pedido\Pedidos;
 
 /**
  * abstract Bling class

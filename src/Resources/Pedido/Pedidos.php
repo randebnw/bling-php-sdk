@@ -1,7 +1,7 @@
 <?php
 namespace Bling\Pedido;
 
-use Bling\Bling;
+use Bling\Core\Bling;
 /**
  *
  * Essa classe é resposavel por lidar com os pedidos dentro do Bling.

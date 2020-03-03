@@ -1,7 +1,7 @@
 <?php
 namespace Bling\Deposito;
 
-use Bling\Bling;
+use Bling\Core\Bling;
 /**
  *
  * Essa classe é resposavel por lidar com os depositos dentro do Bling.

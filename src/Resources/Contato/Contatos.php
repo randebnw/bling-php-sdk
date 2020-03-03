@@ -1,7 +1,8 @@
 <?php
 namespace Bling\Contato;
 
-use Bling\Bling;
+use Bling\Core\Bling;
+
 /**
  * Class Contatos
  *

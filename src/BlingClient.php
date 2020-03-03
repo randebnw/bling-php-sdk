@@ -1,7 +1,7 @@
 <?php
 namespace Bling;
 
-use Bling\Bling;
+use Bling\Core\Bling;
 
 /**
  * BlingClient class
