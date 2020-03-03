@@ -39,10 +39,10 @@ class Config
                 'payment_type' => null,
             ],
             'guzzle' => [
-                'base_uri' => 'https://bling.com.br/Api/v2',
+                'base_url' => 'https://bling.com.br/Api/v2',
                 'timeout' => 30,
                 'headers' => [
-                    'User-Agent' => 'EunaRede/1.0'
+                    'User-Agent' => 'BNW/1.0'
                 ],
                 'query' => [
                   'apikey' => $token
