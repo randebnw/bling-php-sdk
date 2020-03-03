@@ -1,6 +1,8 @@
 <?php
 namespace Bling;
 
+use Bling\Deposito\Depositos;
+
 /**
  * abstract Bling class
  *
@@ -37,7 +39,10 @@ abstract class Bling
     private function getBundles()
     {
         return [
-            Contato\Contatos::class
+            Contato\Contatos::class,
+        	Deposito\Depositos::class,
+       		Produto\Produtos::class,
+       		Pedido\Pedidos::class
         ];
     }
 
