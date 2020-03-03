@@ -29,7 +29,7 @@ class Deposito extends Bling
      */
     public function getDepositos() {
         try {
-        	$request = $this->configurations['guzzle']->get('/pedidos/json/');
+        	$request = $this->configurations['guzzle']->get('depositos/json/');
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response)) {
                 return $response;

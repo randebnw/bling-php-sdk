@@ -39,7 +39,7 @@ class Config
                 'payment_type' => null,
             ],
             'guzzle' => [
-                'base_url' => 'https://bling.com.br/Api/v2',
+                'base_url' => 'https://bling.com.br/Api/v2/',
                 'timeout' => 30,
                 'headers' => [
                     'User-Agent' => 'BNW/1.0'
