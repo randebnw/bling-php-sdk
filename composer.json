@@ -1,5 +1,5 @@
 {
-    "name": "randebnw/bling-php-sdk",
+    "name": "bnw/bling",
     "description": "SDK PHP para Bling ERP",
     "type": "library",
     "require": {
