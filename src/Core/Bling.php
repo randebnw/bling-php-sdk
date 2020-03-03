@@ -168,9 +168,8 @@ abstract class Bling
         return $this->hookBundle($bundle, $name, $arguments);
     }
 
-    public function ResponseException(\Exception $e)
-    {
-        if(!in_array('getResponse', \get_class_methods($e))){
+    public function ResponseException(\Exception $e) {
+    	if (!in_array('getResponse', \get_class_methods($e)) || is_null($e->getResponse())){
             throw new \Exception($e->getMessage(), 1);
         }
         throw new \Exception(\json_encode(\json_decode($e->getResponse()->getBody()->getContents(), true)), 1);
