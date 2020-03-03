@@ -32,8 +32,7 @@ class Contato extends Bling
     public function createContato(array $contatoData)
     {
         try {
-            $request = $this->configurations['guzzle']->request(
-                'POST', '/contato/json/',
+            $request = $this->configurations['guzzle']->post('/contato/json/',
                 ['query' => ['xml' => $contatoData]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
@@ -57,9 +56,7 @@ class Contato extends Bling
     public function getAllContatos()
     {
         try {
-            $request = $this->configurations['guzzle']->request(
-                'GET', '/contatos/json/'
-            );
+            $request = $this->configurations['guzzle']->get('/contatos/json/');
             $response = \json_decode($request->getBody()->getContents(), true);
             if($response && is_array($response)){
                 return $response;
@@ -84,9 +81,7 @@ class Contato extends Bling
     public function getContato($cpfCnpj)
     {
         try {
-            $request = $this->configurations['guzzle']->request(
-                'GET', '/contato/' . $cpfCnpj . '/json/'
-            );
+            $request = $this->configurations['guzzle']->get('/contato/' . $cpfCnpj . '/json/');
             $response = \json_decode($request->getBody()->getContents(), true);
             if($response && is_array($response)){
                 return $response;
@@ -111,8 +106,8 @@ class Contato extends Bling
     public function updateContato($contatoId, $contatoData)
     {
         try {
-            $request = $this->configurations['guzzle']->request(
-                'PUT', '/contato/'. $contatoId .'/json/',
+            $request = $this->configurations['guzzle']->put(
+            	'/contato/'. $contatoId .'/json/',
                 ['query' => ['xml' => $contatoData]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);

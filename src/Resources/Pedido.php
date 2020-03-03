@@ -27,8 +27,8 @@ class Pedido extends Bling
      */
     public function createPedido(array $data) {
         try {
-            $request = $this->configurations['guzzle']->request(
-                'POST', '/pedido/json/',
+            $request = $this->configurations['guzzle']->post(
+                '/pedido/json/',
                 ['query' => ['xml' => $data]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
@@ -57,8 +57,8 @@ class Pedido extends Bling
         		$situacao = (array) $situacao;
         	}
         	
-            $request = $this->configurations['guzzle']->request(
-                'GET', '/pedidos/json/',
+            $request = $this->configurations['guzzle']->get(
+                '/pedidos/json/',
             	['query' => ['filters' => 'dataEmissao[' . $dataEmissao . '];idSituacao[' . implode(',', $situacao) . ']']]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
@@ -80,8 +80,8 @@ class Pedido extends Bling
      */
     public function updatePedido($numero, $data) {
         try {
-            $request = $this->configurations['guzzle']->request(
-                'PUT', '/pedido/'. $numero .'/json/',
+            $request = $this->configurations['guzzle']->put(
+                '/pedido/'. $numero .'/json/',
                 ['query' => ['xml' => $data]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);

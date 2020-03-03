@@ -27,8 +27,8 @@ class Produto extends Bling
      */
     public function createProduto(array $data) {
         try {
-            $request = $this->configurations['guzzle']->request(
-                'POST', '/produto/json/',
+            $request = $this->configurations['guzzle']->post(
+                '/produto/json/',
                 ['query' => ['xml' => $data]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
@@ -52,8 +52,8 @@ class Produto extends Bling
      */
     public function getProduto($codigo) {
         try {
-            $request = $this->configurations['guzzle']->request(
-                'GET', '/produto/' . $codigo . '/json/'
+            $request = $this->configurations['guzzle']->get(
+                '/produto/' . $codigo . '/json/'
             );
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response)) {
@@ -74,8 +74,8 @@ class Produto extends Bling
      */
     public function updateProduto($codigo, $data) {
         try {
-            $request = $this->configurations['guzzle']->request(
-                'PUT', '/produto/'. $codigo .'/json/',
+            $request = $this->configurations['guzzle']->put(
+                '/produto/'. $codigo .'/json/',
                 ['query' => ['xml' => $data]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
