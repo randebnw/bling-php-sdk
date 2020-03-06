@@ -25,18 +25,22 @@ class Produto extends Bling {
      * @throws \Exception
      */
     public function createProduto(array $data) {
+    	$success = false;
         try {
             $request = $this->configurations['guzzle']->post(
                 'produto/json/',
                 ['query' => ['xml' => $data]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
-            if ($response && is_array($response)) {
-                return $response;
+            if ($response && is_array($response) && isset($response['retorno']['produtos'][0]['produto']['codigo'])) {
+                $success = true;
             }
-            return false;
         } catch (\Exception $e){
             return $this->ResponseException($e);
+        }
+        
+        if (!$success && isset($response)) {
+        	throw new \Exception(print_r($response, true));
         }
     }
 
