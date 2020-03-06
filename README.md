@@ -28,3 +28,18 @@ try {
 }
 
 ```
+
+### Atualizar produto
+
+```php
+try {	
+	$client->updateProduto('BNWTEST01', [
+		'codigo' => 'BNWTEST01',
+		'descricao' => 'TESTE BNW 01',
+		'vlr_unit' => 550, 
+		'deposito' => ['id' => 7608775030, 'estoque' => 10]
+	]);
+} catch (\Exception $e) {
+	echo $e->getMessage() . PHP_EOL;
+}
+```

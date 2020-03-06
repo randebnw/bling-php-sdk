@@ -11,8 +11,7 @@ use Bling\Core\Bling;
  * @see https://manuais.bling.com.br/manual/?item=pedidos
  * @version 1.0.0
  */
-class Pedido extends Bling
-{
+class Pedido extends Bling {
     public function __construct($configurations) {
         parent::__construct($configurations);
     }

@@ -11,8 +11,10 @@ use Bling\Core\Bling;
  * @see https://manuais.bling.com.br/manual/?item=depositos
  * @version 1.0.0
  */
-class Deposito extends Bling
-{
+class Deposito extends Bling {
+	const SITUACAO_ATIVO = 'A';
+	const SITUACAO_INATIVO = 'I';
+	
     public function __construct($configurations) {
         parent::__construct($configurations);
     }
@@ -27,12 +29,21 @@ class Deposito extends Bling
      * @return bool|array
      * @throws \Exception
      */
-    public function getDepositos() {
+    public function getDepositos($situacao = '') {
         try {
-        	$request = $this->configurations['guzzle']->get('depositos/json/');
+        	$options = [];
+        	$allowed = ['I', 'A'];
+        	if ($situacao) {
+        		$options['query'] = ['situacao' => $situacao];
+        	}
+        	$request = $this->configurations['guzzle']->get('depositos/json/', $options);
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response)) {
-                return $response;
+            	$list = [];
+            	foreach ($response['retorno']['depositos'] as $item) {
+            		$list[] = $item['deposito'];
+            	}
+                return $list;
             }
             return false;
         } catch (\Exception $e){

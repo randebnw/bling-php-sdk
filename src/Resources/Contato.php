@@ -12,8 +12,7 @@ use Bling\Core\Bling;
  * @author Andre Bellafronte <andre@eunarede.com>
  * @version 1.0.0
  */
-class Contato extends Bling
-{
+class Contato extends Bling {
     public function __construct($configurations)
     {
         parent::__construct($configurations);

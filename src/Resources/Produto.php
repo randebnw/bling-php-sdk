@@ -11,8 +11,7 @@ use Bling\Core\Bling;
  * @see https://manuais.bling.com.br/manual/?item=produtos
  * @version 1.0.0
  */
-class Produto extends Bling
-{
+class Produto extends Bling {
     public function __construct($configurations) {
         parent::__construct($configurations);
     }
@@ -74,9 +73,10 @@ class Produto extends Bling
      */
     public function updateProduto($codigo, $data) {
         try {
-            $request = $this->configurations['guzzle']->put(
+        	$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produto'], true, 'UTF-8');
+            $request = $this->configurations['guzzle']->post(
                 'produto/'. $codigo .'/json/',
-                ['query' => ['xml' => $data]]
+                ['query' => ['xml' => $xml]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response)) {
