@@ -23,25 +23,64 @@ class Converter {
     public static function toBlingProduct(array $data) {
         $bling_data = [];
         $bling_data['codigo'] = $data['sku'];
-        $bling_data['descricao'] = $data['name'];
-        $bling_data['situacao'] = $data['status'] ? self::PRODUTO_STATUS_ATIVO : self::PRODUTO_STATUS_INATIVO;
-        $bling_data['descricaoCurta'] = $data['mini_description'];
-        $bling_data['descricaoComplementar'] = $data['description'];
-        $bling_data['vlr_unit'] = $data['price'];
-        $bling_data['peso_bruto'] = $data['weigth'];
-        $bling_data['estoque'] = $data['quantity'];
+        
+        if (isset($data['name'])) {
+        	$bling_data['descricao'] = $data['name'];
+        }
+        
+        if (isset($data['situacao'])) {
+        	$bling_data['situacao'] = $data['status'] ? self::PRODUTO_STATUS_ATIVO : self::PRODUTO_STATUS_INATIVO;
+        }
+        
+        if (isset($data['price'])) {
+        	$bling_data['vlr_unit'] = $data['price'];
+        }
+        
+        if (isset($data['description'])) {
+        	$bling_data['descricaoComplementar'] = $data['description'];
+        }
+        
+        if (isset($data['mini_description'])) {
+        	$bling_data['descricaoCurta'] = $data['mini_description'];
+        }
+        
+        if (isset($data['quantity'])) {
+        	$bling_data['estoque'] = $data['quantity'];
+        }
+        
         if (isset($data['storage']) && is_array($data['storage'])) {
         	$bling_data['deposito']['id'] = $data['storage']['bling_id'];
         	$bling_data['deposito']['estoque'] = $data['storage']['quantity'];
         }
         
-        $bling_data['gtin'] = $data['ean'];
-        $bling_data['largura'] = $data['width'];
-        $bling_data['altura'] = $data['height'];
-        $bling_data['profundidade'] = $data['length'];
-        $bling_data['unidadeMedida'] = $data['length_class_desc'];
+        if (isset($data['ean'])) {
+        	$bling_data['gtin'] = $data['ean'];
+        }
         
-        $bling_data['marca'] = $data['manufacturer'];
+        if (isset($data['width'])) {
+        	$bling_data['largura'] = $data['width'];
+        }
+        
+        if (isset($data['height'])) {
+        	$bling_data['altura'] = $data['height'];
+        }
+        
+        if (isset($data['length'])) {
+        	$bling_data['profundidade'] = $data['length'];
+        }
+        
+        if (isset($data['length_class_desc'])) {
+        	// TODO conversao de unidade de medida OC > Bling
+        	$bling_data['unidadeMedida'] = $data['length_class_desc'];
+        }
+        
+        if (isset($data['weigth'])) {
+        	$bling_data['peso_bruto'] = $data['weigth'];
+        }
+        
+        if (isset($data['manufacturer'])) {
+        	$bling_data['marca'] = $data['manufacturer'];
+        }
         
         if (isset($data['options'])) {
         	$bling_data['variacoes'] = [];
