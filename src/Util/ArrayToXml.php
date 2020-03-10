@@ -226,7 +226,7 @@ class ArrayToXml {
         return $element;
     }
 
-    protected function removeControlCharacters(string $value)
+    protected function removeControlCharacters($value)
     {
         return preg_replace('/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/', '', $value);
     }

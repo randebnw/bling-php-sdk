@@ -43,6 +43,37 @@ class Produto extends Bling {
         	throw new \Exception(print_r($response, true));
         }
     }
+    
+    /**
+     *
+     * Atualiza um produto no Bling com novo array de dados buscando por seu ID
+     *
+     * @return bool|mixed|void
+     * @throws \Exception
+     */
+    public function updateProduto($codigo, $data) {
+    	$success = false;
+    	try {
+    		$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produto'], true, 'UTF-8');
+    		$request = $this->configurations['guzzle']->post(
+    				'produto/'. $codigo .'/json/',
+    				['query' => ['xml' => $xml]]
+    				);
+    		$response = \json_decode($request->getBody()->getContents(), true);
+    		
+    		// TODO verificar esse array duplo de retorno
+    		if ($response && is_array($response) && isset($response['retorno']['produtos'][0][0]['produto']['codigo'])) {
+    			$success = true;
+    		}
+    	} catch (\Exception $e){
+    		return $this->ResponseException($e);
+    	}
+    	
+    	if (!$success && isset($response)) {
+    		$code = isset($response['retorno']['erros'][0]['erro']['cod']) ? $response['retorno']['erros'][0]['erro']['cod'] : '';
+    		throw new \Exception(print_r($response, true), (int) $code);
+    	}
+    }
 
 	/**
      *
@@ -57,30 +88,6 @@ class Produto extends Bling {
         try {
             $request = $this->configurations['guzzle']->get(
                 'produto/' . $codigo . '/json/'
-            );
-            $response = \json_decode($request->getBody()->getContents(), true);
-            if ($response && is_array($response)) {
-                return $response;
-            }
-            return false;
-        } catch (\Exception $e){
-            return $this->ResponseException($e);
-        }
-    }
-
-    /**
-     *
-     * Atualiza um produto no Bling com novo array de dados buscando por seu ID
-     *
-     * @return bool|mixed|void
-     * @throws \Exception
-     */
-    public function updateProduto($codigo, $data) {
-        try {
-        	$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produto'], true, 'UTF-8');
-            $request = $this->configurations['guzzle']->post(
-                'produto/'. $codigo .'/json/',
-                ['query' => ['xml' => $xml]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response)) {

@@ -1,6 +1,8 @@
 <?php
 namespace Bling\Opencart;
 
+use Bling\Core\Util;
+
 /**
  *
  * Converte produto do Bling para o Opencart e vice-versa
@@ -19,8 +21,10 @@ class Converter {
 	 * @author Rande A. Moreira
 	 * @since 4 de mar de 2020
 	 * @param array $data
+	 * @param array $config
+     * @param array $weight_lib
 	 */
-    public static function toBlingProduct(array $data) {
+    public static function toBlingProduct(array $data, $config, $weight_lib) {
         $bling_data = [];
         $bling_data['codigo'] = $data['sku'];
         
@@ -69,13 +73,18 @@ class Converter {
         	$bling_data['profundidade'] = $data['length'];
         }
         
-        if (isset($data['length_class_desc'])) {
-        	// TODO conversao de unidade de medida OC > Bling
-        	$bling_data['unidadeMedida'] = $data['length_class_desc'];
+        $unidadesMedida = \Bling\Core\Util::getUnidadesMedida();
+        if (isset($data['length_class_id'])) {
+        	foreach ($config['bling_map_length_id'] as $bling_key => $length_class_id) {
+        		if ($length_class_id == $data['length_class_id']) {
+        			$bling_data['unidadeMedida'] = $unidadesMedida[$bling_key];
+        			break;
+        		}
+        	}
         }
         
         if (isset($data['weigth'])) {
-        	$bling_data['peso_bruto'] = $data['weigth'];
+        	$bling_data['peso_bruto'] = $weight_lib->convertToKg($data['weigth'], $data['weigth_class_id']);
         }
         
         if (isset($data['manufacturer'])) {
@@ -103,8 +112,10 @@ class Converter {
      * @author Rande A. Moreira
      * @since 4 de mar de 2020
      * @param array $data
+     * @param array $config
+     * @param array $weight_lib
      */
-    public static function toOpencartProduct(array $data) {
+    public static function toOpencartProduct(array $data, $config, $weight_lib) {
     	$oc_data = [];
     	
     	$oc_data = [];
@@ -115,6 +126,7 @@ class Converter {
     	$oc_data['description'] = $data['descricaoComplementar'];
     	$oc_data['price'] = $data['vlr_unit'];
     	$oc_data['weigth'] = $data['peso_bruto'];
+    	$oc_data['weigth_class_id'] = $weight_lib->getIdByUnit('kg');
     	$oc_data['quantity'] = $data['estoque'];
     	
     	/*if (isset($data['storage']) && is_array($data['storage'])) {
@@ -126,7 +138,14 @@ class Converter {
     	$oc_data['width'] = $data['largura'];
     	$oc_data['height'] = $data['altura'];
     	$oc_data['length'] = $data['profundidade'];
-    	$oc_data['length_class_desc'] = $data['unidadeMedida'];
+    	
+    	$unidadesMedida = \Bling\Core\Util::getUnidadesMedida();
+    	foreach ($unidadesMedida as $key => $label) {
+    		if ($label == $data['unidadeMedida']) {
+    			$oc_data['length_class_id'] = $config['bling_map_length_id'][$key];
+    			break;
+    		}
+    	}
     	
     	$oc_data['manufacturer'] = $data['marca'];
     	
