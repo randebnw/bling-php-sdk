@@ -12,7 +12,7 @@ use Bling\Core\Bling;
  * @version 1.0.0
  */
 class Pedido extends Bling {
-    public function __construct($configurations) {
+	public function __construct($configurations) {
         parent::__construct($configurations);
     }
 

@@ -5,7 +5,7 @@ use Bling\Core\Util;
 
 /**
  *
- * Converte produto do Bling para o Opencart e vice-versa
+ * Converte dados do Bling para o Opencart e vice-versa
  *
  * @package Bling\Opencart
  * @author Rande A. Moreira <rande@adok.com.br>
@@ -13,9 +13,6 @@ use Bling\Core\Util;
  * @version 1.0.0
  */
 class Converter {
-	const PRODUTO_STATUS_ATIVO = 'Ativo';
-	const PRODUTO_STATUS_INATIVO = 'Inativo';
-	
 	/**
 	 * 
 	 * @author Rande A. Moreira
@@ -33,7 +30,7 @@ class Converter {
         }
         
         if (isset($data['situacao'])) {
-        	$bling_data['situacao'] = $data['status'] ? self::PRODUTO_STATUS_ATIVO : self::PRODUTO_STATUS_INATIVO;
+        	$bling_data['situacao'] = $data['status'] ? \Bling\Core\Util::PRODUTO_STATUS_ATIVO : \Bling\Core\Util::PRODUTO_STATUS_INATIVO;
         }
         
         if (isset($data['price'])) {
@@ -75,7 +72,8 @@ class Converter {
         
         $unidadesMedida = \Bling\Core\Util::getUnidadesMedida();
         if (isset($data['length_class_id'])) {
-        	foreach ($config['bling_map_length_id'] as $bling_key => $length_class_id) {
+        	$map_length = $config->get('bling_map_length_id');
+        	foreach ($map_length as $bling_key => $length_class_id) {
         		if ($length_class_id == $data['length_class_id']) {
         			$bling_data['unidadeMedida'] = $unidadesMedida[$bling_key];
         			break;
@@ -121,7 +119,7 @@ class Converter {
     	$oc_data = [];
     	$oc_data['sku'] = $data['codigo'];
     	$oc_data['name'] = $data['description'];
-    	$oc_data['status'] = $data['situacao'] == self::PRODUTO_STATUS_ATIVO ? 1 : 0;
+    	$oc_data['status'] = $data['situacao'] == \Bling\Core\Util::PRODUTO_STATUS_ATIVO ? 1 : 0;
     	$oc_data['mini_description'] = $data['descricaoCurta'];
     	$oc_data['description'] = $data['descricaoComplementar'];
     	$oc_data['price'] = $data['vlr_unit'];
@@ -140,9 +138,10 @@ class Converter {
     	$oc_data['length'] = $data['profundidade'];
     	
     	$unidadesMedida = \Bling\Core\Util::getUnidadesMedida();
+    	$map_length = $config->get('bling_map_length_id');
     	foreach ($unidadesMedida as $key => $label) {
     		if ($label == $data['unidadeMedida']) {
-    			$oc_data['length_class_id'] = $config['bling_map_length_id'][$key];
+    			$oc_data['length_class_id'] = $map_length[$key];
     			break;
     		}
     	}
@@ -162,6 +161,314 @@ class Converter {
     		}
     	}
     	
+    	return $oc_data;
+    }
+    
+    /**
+     * 
+     * @author Rande A. Moreira
+     * @since 12 de mar de 2020
+     * @param array $data
+     * @param unknown $config
+     * @param unknown $map_zones
+     */
+    public static function toOpencartCustomer(array $data, $config, $map_zones) {
+    	$oc_data = [];
+    	
+    	$oc_data['customer_group_id']  = $config->get('dc_default_customer_group');
+    	$names = explode(' ', $data['nome']);
+    	$oc_data['firstname'] = array_shift($names);
+    	$oc_data['lastname'] = ' ';
+    	if ($names) {
+    		$oc_data['lastname'] = implode(' ', $names);
+    	}
+    	
+    	$oc_data['email'] = $data['email'];
+    	$oc_data['telephone'] = $data['fone'];
+    	$oc_data['fax'] = $data['celular'];
+    	$oc_data['rg'] = $data['rg'];
+    	$oc_data['cpf'] = '';
+    	$oc_data['cnpj'] = '';
+    	$oc_data['inscricao_estadual'] = '';
+    	$oc_data['data_nascimento'] = '';
+    	$oc_data['razao_social'] = '';
+    	$oc_data['sexo'] = '';
+    	$oc_data['password'] = uniqid();
+    	$oc_data['company'] = '';
+    	$oc_data['company_id'] = '';
+    	$oc_data['tax_id'] = '';
+    	
+    	$cpf_cnpj = preg_replace('/([^0-9])/i', '', $data['cnpj']);
+    	if (strlen($cpf_cnpj) == 11) {
+    		$oc_data['cpf'] = $cpf_cnpj;
+    		$oc_data['data_nascimento'] = $data['dataNascimento'];
+    		$oc_data['sexo'] = $data['sexo'] == \Bling\Core\Util::CLIENTE_SEXO_FEMININO ? 'f' : 'm';
+    	} else {
+    		$oc_data['cnpj'] = $cpf_cnpj;
+    		$oc_data['inscricao_estadual'] = $data['ie'];
+    		$oc_data['razao_social'] = $data['nome'];
+    	}
+    	
+    	$oc_data['address_1'] = $data['endereco'];
+		$oc_data['address_2'] = $data['bairro'];
+		$oc_data['city']      = $data['cidade'];
+		$oc_data['numero']    = $data['numero'];
+		$oc_data['postcode']  = preg_replace('/([^0-9])/i', '', $data['cep']);;
+    	$oc_data['country_id'] = $config->get('config_country_id');
+    	$oc_data['zone_id'] = isset($map_zones[$data['uf']]) ? $map_zones[$data['uf']]['zone_id'] : $config->get('config_zone_id');
+    	
+    	return $oc_data;
+    }
+    
+    public static function toOpencartOrder(array $data, $customer_info, $map_products, $country_info, $map_zones, $config, $currency, $tax) {
+    	$oc_data = [];
+    	
+    	$oc_data['bling_id'] = $data['numero'];
+    	$oc_data['invoice_prefix'] = $config->get('config_invoice_prefix');
+    	$oc_data['store_id'] = $config->get('config_store_id');
+    	$oc_data['store_name'] = $config->get('config_name');
+    	$oc_data['affiliate_id'] = 0;
+    	$oc_data['commission'] = 0;
+    	
+    	$oc_data['language_id'] = $config->get('config_language_id');
+    	$oc_data['currency_id'] = $currency->getId();
+    	$oc_data['currency_code'] = $currency->getCode();
+    	$oc_data['currency_value'] = $currency->getValue($currency->getCode());
+    	$oc_data['user_agent'] = 'Bling/Api';
+    	$oc_data['accept_language'] = '';
+    	$oc_data['vouchers'] = [];
+    	$oc_data['comment'] = 'Pedido #' . $data['numero'] . ' importado do Bling.';
+    	$oc_data['ip'] = $this->request->server['REMOTE_ADDR'];
+    	$oc_data['forwarded_ip'] = '';
+    	
+    	if (!empty($this->request->server['HTTP_X_FORWARDED_FOR'])) {
+    		$oc_data['forwarded_ip'] = $this->request->server['HTTP_X_FORWARDED_FOR'];
+    	} elseif(!empty($this->request->server['HTTP_CLIENT_IP'])) {
+    		$oc_data['forwarded_ip'] = $this->request->server['HTTP_CLIENT_IP'];
+    	}
+    		
+    	if ($oc_data['store_id']) {
+    		$oc_data['store_url'] = $config->get('config_url');
+    	} else {
+    		$oc_data['store_url'] = HTTP_SERVER;
+    	}
+    	
+    	// dados basicos do cadastro do cliente 
+    	$oc_data['customer_id'] = $customer_info['customer_id'];
+		$oc_data['customer_group_id'] = $customer_info['customer_group_sid'];
+		$oc_data['firstname'] = $customer_info['firstname'];
+		$oc_data['lastname'] = $customer_info['lastname'];
+		$oc_data['cpf'] = $customer_info['cpf'];
+		$oc_data['cnpj'] = $customer_info['cnpj'];
+		$oc_data['inscricao_estadual'] = $customer_info['inscricao_estadual'];
+		$oc_data['razao_social'] = $customer_info['razao_social'];
+		$oc_data['rg'] = $customer_info['rg'];
+		$oc_data['sexo'] = $customer_info['sexo'];
+		$oc_data['data_nascimento'] = $customer_info['data_nascimento'];
+		$oc_data['email'] = $customer_info['email'];
+		$oc_data['telephone'] = $customer_info['telephone'];
+		$oc_data['fax'] = $customer_info['fax'];
+		
+		// endereco de cobranca
+		$bling_address = $data['cliente'];
+		$payment_zone = isset($zone_info[$bling_address['uf']]) ? $zone_info[$bling_address['uf']] : $config->get('config_zone_id');
+		$payment_address['apelido'] = '';
+		$payment_address['company'] = '';
+		$payment_address['company_id'] = '';
+		$payment_address['tax_id'] = '';
+		$payment_address['firstname'] = $customer_info['firstname'];
+		$payment_address['lastname'] = $customer_info['lastname'];
+		$payment_address['address_1'] = $bling_address['endereco'];
+		$payment_address['address_2'] = $bling_address['bairro'];
+		$payment_address['complemento'] = $bling_address['complemento'];
+		$payment_address['numero'] = $bling_address['numero'];
+		$payment_address['city'] = $bling_address['cidade'];
+		$payment_address['postcode'] = preg_replace('/([^0-9])/i', '', $bling_address['cep']);;
+		$payment_address['zone'] = $payment_zone['name'];
+		$payment_address['zone_id'] = $payment_zone['zone_id'];
+		$payment_address['country'] = $country_info['name'];
+		$payment_address['country_id'] = $country_info['country_id'];
+		$payment_address['address_format'] = $country_info['address_format'];
+    	
+		foreach ($payment_address as $key => $val) {
+			$oc_data['payment_' . $key] = $val;
+		}
+	
+		// forma de pagamento
+		$oc_data['payment_method'] = '';
+		$oc_data['payment_code'] = '';
+		$payment_map = $config->get('bling_map_payment');
+		if (isset($data['parcelas']) && $data['parcelas']) {
+			foreach ($data['parcelas'] as $parcela) {
+				$oc_data['payment_method'] = $parcela['parcela']['forma_pagamento']['descricao'];;
+				
+				$payment_id = $parcela['parcela']['forma_pagamento']['id'];
+				if (isset($payment_map[$payment_id])) {
+					$oc_data['payment_code'] = $payment_map[$payment_id];
+				}
+			}
+		}
+		
+		if (!$oc_data['payment_code']) {
+			throw new \Exception('Pagamento do pedido ' . $data['numero'] . ' não esta mapeado.');
+		}
+		
+		// endereco de entrega
+		$shipping_address = $payment_address;
+		if (isset($data['transporte']['enderecoEntrega'])) {
+			$entrega = $data['transporte']['enderecoEntrega'];
+			$names = explode(' ', $entrega['nome']);
+			$shipping_address['firstname'] = array_shift($names);
+			$shipping_address['lastname'] = ' ';
+			if ($names) {
+				$shipping_address['lastname'] = implode(' ', $names);
+			}
+			
+			$shipping_zone = isset($zone_info[$entrega['uf']]) ? $zone_info[$entrega['uf']] : $config->get('config_zone_id');
+			$shipping_address['address_1'] = $entrega['endereco'];
+			$shipping_address['address_2'] = $entrega['bairro'];
+			$shipping_address['complemento'] = $entrega['complemento'];
+			$shipping_address['numero'] = $entrega['numero'];
+			$shipping_address['city'] = $entrega['cidade'];
+			$shipping_address['postcode'] = preg_replace('/([^0-9])/i', '', $entrega['cep']);;
+			$shipping_address['zone'] = $shipping_zone['name'];
+			$shipping_address['zone_id'] = $shipping_zone['zone_id'];
+		}
+		
+		foreach ($shipping_address as $key => $val) {
+			$oc_data['shipping_' . $key] = $val;
+		}
+		
+		// forma de entrega
+		$oc_data['shipping_method'] = 'Frete';
+		$oc_data['shipping_code'] = 'flat.flat';
+		$oc_data['tracking'] = [];
+		if (isset($data['valorfrete'], $data['transporte']['transportadora'])) {
+			$oc_data['shipping_method'] = $data['transporte']['transportadora'];			
+			
+			// TODO tratar outros casos que nao sejam correios
+			if (strpos(strtolower($data['transporte']['transportadora']), 'correios') !== false) {
+				if (isset($data['transporte']['volumes'])) {
+					// armazena codigos de rastreamento
+					foreach ($data['transporte']['volumes'] as $volume) {
+						if (isset($volume['volume']['codigoRastreamento'])) {
+							$oc_data['tracking'][] = $volume['volume']['codigoRastreamento'];
+						}
+					}
+					
+					// pega o primeiro volume apenas para identificar o tipo de servico
+					$volume = $data['transporte']['volumes'][0]['volume'];
+					$oc_data['shipping_method'] .= ' - ' . $volume['servico'];
+					if (isset($volume['prazoEntregaPrevisto'])) {
+						$oc_data['shipping_method'] .= ' (Previsão ' . $volume['prazoEntregaPrevisto'] . ' dias úteis)';
+					}
+					
+					switch ($volume['servico']) {
+						case 'PAC':
+							$oc_data['shipping_code'] = 'correios.04510';
+							break;
+						case 'SEDEX':
+							$oc_data['shipping_code'] = 'correios.04014';
+							break;
+						case 'SEDEX 10':
+							$oc_data['shipping_code'] = 'correios.40215';
+							break;
+						default:
+							break;
+					}
+				}
+			}
+		}
+		
+		// produtos
+		$product_data = [];
+		$oc_data['has_stock'] = true;
+		foreach ($data['itens'] as $product) {
+			$bling_product = $product['item'];
+			
+			if (!isset($map_products[$bling_product['codigo']])) {
+				throw new \Exception('Produto com SKU ' . $bling_product['codigo'] . ' não encontrado na loja virtual.');
+			}
+			
+			/*$option_data = array();
+			foreach ($product['option'] as $option) {
+				if ($option['type'] != 'file') {
+					$value = $option['option_value'];
+				} else {
+					$value = $this->encryption->decrypt($option['option_value']);
+				}
+					
+				$option_data[] = array(
+					'product_option_id'       => $option['product_option_id'],
+					'product_option_value_id' => $option['product_option_value_id'],
+					'option_id'               => $option['option_id'],
+					'option_value_id'         => $option['option_value_id'],
+					'name'                    => $option['name'],
+					'value'                   => $value,
+					'type'                    => $option['type']
+				);
+			}*/
+		
+			$product_info = $map_products[$bling_product['codigo']];
+			$product_data[] = [
+				'product_id' => $product_info['product_id'],
+				'name'       => $bling_product['name'],
+				'model'      => $product_info['model'],
+				'option'     => [], // TODO options
+				'download'   => [],
+				'quantity'   => $bling_product['quantidade'],
+				'subtract'   => $product_info['subtract'],
+				'price'      => $bling_product['valorunidade'], // TODO verificar se esse preço ja vem com o desconto
+				'total'      => $bling_product['quantidade'] * $bling_product['valorunidade'],
+				'tax'        => 0, // TODO impostos
+				'reward'     => 0 // TODO reward
+			];
+			
+			if ($bling_product['quantidade'] > $product_info['quantity']) {
+				$oc_data['has_stock'] = false;
+			}
+		}
+		
+		$oc_data['products'] = $product_data;
+		
+		// totais
+		$total_data = [];
+		$total_data[] = [
+			'code'       => 'sub_total',
+			'title'      => 'Sub-total',
+			'text'       => $currency->format($data['totalprodutos']),
+			'value'      => $data['totalprodutos'],
+			'sort_order' => $this->config->get('sub_total_sort_order')
+		];
+		
+		// TODO desconto
+		
+		if (isset($data['valorfrete'])) {
+			$shipping_title = 'Frete';
+			if (isset($data['transporte']['transportadora'])) {
+				$shipping_title .= ' - ' . $data['transporte']['transportadora'];
+			}
+			
+			$total_data[] = [
+				'code'       => 'shipping',
+				'title'      => $shipping_title,
+				'text'       => $currency->format($data['valorfrete']),
+				'value'      => $data['valorfrete'],
+				'sort_order' => $this->config->get('shipping_sort_order')
+			];
+		}
+		
+		$total_data[] = [
+			'code'       => 'total',
+			'title'      => 'Total',
+			'text'       => $currency->format($data['totalvenda']),
+			'value'      => $data['totalvenda'],
+			'sort_order' => $this->config->get('total_sort_order')
+		];
+		
+		$oc_data['totals'] = $total_data;
+		$oc_data['total'] = $data['totalvenda'];
+    	 
     	return $oc_data;
     }
 }

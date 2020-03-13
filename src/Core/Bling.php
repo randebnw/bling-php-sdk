@@ -39,8 +39,10 @@ abstract class Bling
         return [
             \Bling\Resources\Contato::class,
         	\Bling\Resources\Deposito::class,
+        	\Bling\Resources\FormaPagamento::class,
        		\Bling\Resources\Produto::class,
-       		\Bling\Resources\Pedido::class
+       		\Bling\Resources\Pedido::class,
+        	\Bling\Resources\Situacao::class
         ];
     }
 
