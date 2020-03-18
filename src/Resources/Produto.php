@@ -90,8 +90,8 @@ class Produto extends Bling {
                 'produto/' . $codigo . '/json/'
             );
             $response = \json_decode($request->getBody()->getContents(), true);
-            if ($response && is_array($response)) {
-                return $response;
+            if ($response && is_array($response) && isset($response['retorno']['produtos'][0]['produto'])) {
+                return $response['retorno']['produtos'][0]['produto'];
             }
             return false;
         } catch (\Exception $e){

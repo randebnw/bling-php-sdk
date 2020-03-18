@@ -184,8 +184,8 @@ class Converter {
     	}
     	
     	$oc_data['email'] = $data['email'];
-    	$oc_data['telephone'] = $data['fone'];
-    	$oc_data['fax'] = $data['celular'];
+    	$oc_data['telephone'] = preg_replace('/([^0-9])/i', '', $data['fone']);
+    	$oc_data['fax'] = preg_replace('/([^0-9])/i', '', $data['celular']);
     	$oc_data['rg'] = $data['rg'];
     	$oc_data['cpf'] = '';
     	$oc_data['cnpj'] = '';
@@ -220,7 +220,7 @@ class Converter {
     	return $oc_data;
     }
     
-    public static function toOpencartOrder(array $data, $customer_info, $map_products, $country_info, $map_zones, $config, $currency, $tax) {
+    public static function toOpencartOrder(array $data, $customer_info, $map_products, $country_info, $map_zones, $config, $currency) {
     	$oc_data = [];
     	
     	$oc_data['bling_id'] = $data['numero'];
@@ -238,24 +238,24 @@ class Converter {
     	$oc_data['accept_language'] = '';
     	$oc_data['vouchers'] = [];
     	$oc_data['comment'] = 'Pedido #' . $data['numero'] . ' importado do Bling.';
-    	$oc_data['ip'] = $this->request->server['REMOTE_ADDR'];
+    	$oc_data['ip'] = $_SERVER['REMOTE_ADDR'];
     	$oc_data['forwarded_ip'] = '';
     	
-    	if (!empty($this->request->server['HTTP_X_FORWARDED_FOR'])) {
-    		$oc_data['forwarded_ip'] = $this->request->server['HTTP_X_FORWARDED_FOR'];
-    	} elseif(!empty($this->request->server['HTTP_CLIENT_IP'])) {
-    		$oc_data['forwarded_ip'] = $this->request->server['HTTP_CLIENT_IP'];
+    	if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    		$oc_data['forwarded_ip'] = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    	} elseif(!empty($_SERVER['HTTP_CLIENT_IP'])) {
+    		$oc_data['forwarded_ip'] = $_SERVER['HTTP_CLIENT_IP'];
     	}
     		
     	if ($oc_data['store_id']) {
-    		$oc_data['store_url'] = $config->get('config_url');
+    		$oc_data['store_url'] = $config->get('config_ssl');
     	} else {
-    		$oc_data['store_url'] = HTTP_SERVER;
+    		$oc_data['store_url'] = HTTPS_SERVER;
     	}
     	
     	// dados basicos do cadastro do cliente 
     	$oc_data['customer_id'] = $customer_info['customer_id'];
-		$oc_data['customer_group_id'] = $customer_info['customer_group_sid'];
+		$oc_data['customer_group_id'] = $customer_info['customer_group_id'];
 		$oc_data['firstname'] = $customer_info['firstname'];
 		$oc_data['lastname'] = $customer_info['lastname'];
 		$oc_data['cpf'] = $customer_info['cpf'];
@@ -271,7 +271,7 @@ class Converter {
 		
 		// endereco de cobranca
 		$bling_address = $data['cliente'];
-		$payment_zone = isset($zone_info[$bling_address['uf']]) ? $zone_info[$bling_address['uf']] : $config->get('config_zone_id');
+		$payment_zone = isset($map_zones[$bling_address['uf']]) ? $map_zones[$bling_address['uf']] : ['zone_id' => $config->get('config_zone_id'), 'name' => 'MG'];
 		$payment_address['apelido'] = '';
 		$payment_address['company'] = '';
 		$payment_address['company_id'] = '';
@@ -310,7 +310,9 @@ class Converter {
 		}
 		
 		if (!$oc_data['payment_code']) {
-			throw new \Exception('Pagamento do pedido ' . $data['numero'] . ' não esta mapeado.');
+			// TODO definir como vai ficar a forma de pagamento
+			$oc_data['payment_code'] = 'cod';
+			//throw new \Exception('Pagamento do pedido ' . $data['numero'] . ' não esta mapeado.');
 		}
 		
 		// endereco de entrega
@@ -324,7 +326,7 @@ class Converter {
 				$shipping_address['lastname'] = implode(' ', $names);
 			}
 			
-			$shipping_zone = isset($zone_info[$entrega['uf']]) ? $zone_info[$entrega['uf']] : $config->get('config_zone_id');
+			$shipping_zone = isset($map_zones[$entrega['uf']]) ? $map_zones[$entrega['uf']] : ['zone_id' => $config->get('config_zone_id'), 'name' => 'MG'];
 			$shipping_address['address_1'] = $entrega['endereco'];
 			$shipping_address['address_2'] = $entrega['bairro'];
 			$shipping_address['complemento'] = $entrega['complemento'];
@@ -412,7 +414,10 @@ class Converter {
 			$product_info = $map_products[$bling_product['codigo']];
 			$product_data[] = [
 				'product_id' => $product_info['product_id'],
-				'name'       => $bling_product['name'],
+				'dc_id' 	 => $product_info['dc_id'],
+				'is_special' => true, // forcar usar o preco definido
+				'discount'   => 0,
+				'name'       => $bling_product['descricao'],
 				'model'      => $product_info['model'],
 				'option'     => [], // TODO options
 				'download'   => [],
@@ -438,7 +443,7 @@ class Converter {
 			'title'      => 'Sub-total',
 			'text'       => $currency->format($data['totalprodutos']),
 			'value'      => $data['totalprodutos'],
-			'sort_order' => $this->config->get('sub_total_sort_order')
+			'sort_order' => $config->get('sub_total_sort_order')
 		];
 		
 		// TODO desconto
@@ -454,7 +459,7 @@ class Converter {
 				'title'      => $shipping_title,
 				'text'       => $currency->format($data['valorfrete']),
 				'value'      => $data['valorfrete'],
-				'sort_order' => $this->config->get('shipping_sort_order')
+				'sort_order' => $config->get('shipping_sort_order')
 			];
 		}
 		
@@ -463,7 +468,7 @@ class Converter {
 			'title'      => 'Total',
 			'text'       => $currency->format($data['totalvenda']),
 			'value'      => $data['totalvenda'],
-			'sort_order' => $this->config->get('total_sort_order')
+			'sort_order' => $config->get('total_sort_order')
 		];
 		
 		$oc_data['totals'] = $total_data;

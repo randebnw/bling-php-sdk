@@ -58,11 +58,15 @@ class Pedido extends Bling {
         	
             $request = $this->configurations['guzzle']->get(
                 'pedidos/json/',
-            	['query' => ['filters' => 'dataEmissao[' . $dataEmissao . '];idSituacao[' . implode(',', $situacao) . ']']]
+            	['query' => ['filters' => 'dataEmissao[' . $dataEmissao . ' TO ' . $dataEmissao . '];idSituacao[' . implode(',', $situacao) . ']']]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response)) {
-                return $response;
+                $list = [];
+            	foreach ($response['retorno']['pedidos'] as $item) {
+            		$list[] = $item['pedido'];
+            	}
+                return $list;
             }
             return false;
         } catch (\Exception $e){
