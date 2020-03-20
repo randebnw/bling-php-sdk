@@ -61,7 +61,7 @@ class Pedido extends Bling {
             	['query' => ['filters' => 'dataEmissao[' . $dataEmissao . ' TO ' . $dataEmissao . '];idSituacao[' . implode(',', $situacao) . ']']]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
-            if ($response && is_array($response)) {
+            if ($response && is_array($response) && isset($response['retorno']['pedidos'])) {
                 $list = [];
             	foreach ($response['retorno']['pedidos'] as $item) {
             		$list[] = $item['pedido'];

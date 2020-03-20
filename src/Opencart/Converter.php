@@ -415,6 +415,8 @@ class Converter {
 			$product_data[] = [
 				'product_id' => $product_info['product_id'],
 				'dc_id' 	 => $product_info['dc_id'],
+				'dc_product_price' 	=> isset($bling_product['dc_product_price']) ? $bling_product['dc_product_price'] : '',
+				'company_id' => isset($bling_product['company_id']) ? $bling_product['company_id'] : '',
 				'is_special' => true, // forcar usar o preco definido
 				'discount'   => 0,
 				'name'       => $bling_product['descricao'],
