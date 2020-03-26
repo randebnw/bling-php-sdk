@@ -37,7 +37,7 @@ class Converter {
         	$bling_data['vlr_unit'] = $data['price'];
         }
         
-        if (isset($data['description'])) {
+        if (isset($data['description']) && !empty($data['description'])) {
         	$bling_data['descricaoComplementar'] = $data['description'];
         }
         

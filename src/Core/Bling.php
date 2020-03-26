@@ -171,4 +171,28 @@ abstract class Bling
         }
         throw new \Exception(\json_encode(\json_decode($e->getResponse()->getBody()->getContents(), true)), 1);
     }
+    
+    protected function _getError($response) {
+    	$code = -1;
+    	$message = print_r($response, true);
+    	if (isset($response['retorno']['erros'])) {
+    		$error_copy = $response['retorno']['erros'];
+    		$first = array_shift($response['retorno']['erros']);
+    		
+    		if (isset($first['erro']['cod'], $first['erro']['msg'])) {
+    			// trata um dos formatos de retorno de erro
+    			$code = $first['erro']['cod'];
+    			$message = $first['erro']['msg'];
+    		} else {
+    			// trata o outro formato de retorno de erro
+    			$keys = array_keys($error_copy);
+    			$code = (int) $keys[0];
+    			if (isset($error_copy[$code])) {
+    				$message = (string) $error_copy[$code];
+    			}
+    		}
+    	}
+    	
+    	return compact('message', 'code');
+    }
 }

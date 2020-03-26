@@ -27,21 +27,23 @@ class Produto extends Bling {
     public function createProduto(array $data) {
     	$success = false;
         try {
+        	$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produto'], true, 'UTF-8');
             $request = $this->configurations['guzzle']->post(
                 'produto/json/',
-                ['query' => ['xml' => $data]]
+                ['query' => ['xml' => $xml]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
-            if ($response && is_array($response) && isset($response['retorno']['produtos'][0]['produto']['codigo'])) {
+            if ($response && is_array($response) && isset($response['retorno']['produtos'][0][0]['produto']['codigo'])) {
                 $success = true;
             }
         } catch (\Exception $e){
             return $this->ResponseException($e);
         }
         
-        if (!$success && isset($response)) {
-        	throw new \Exception(print_r($response, true));
-        }
+    	if (!$success && isset($response['retorno']['erros'])) {
+    		$error = $this->_getError($response);    		
+    		throw new \Exception($error['message'], $error['code']);
+    	}
     }
     
     /**
@@ -60,8 +62,6 @@ class Produto extends Bling {
     				['query' => ['xml' => $xml]]
     				);
     		$response = \json_decode($request->getBody()->getContents(), true);
-    		
-    		// TODO verificar esse array duplo de retorno
     		if ($response && is_array($response) && isset($response['retorno']['produtos'][0][0]['produto']['codigo'])) {
     			$success = true;
     		}
@@ -69,9 +69,9 @@ class Produto extends Bling {
     		return $this->ResponseException($e);
     	}
     	
-    	if (!$success && isset($response)) {
-    		$code = isset($response['retorno']['erros'][0]['erro']['cod']) ? $response['retorno']['erros'][0]['erro']['cod'] : '';
-    		throw new \Exception(print_r($response, true), (int) $code);
+    	if (!$success && isset($response['retorno']['erros'])) {
+    		$error = $this->_getError($response);    		
+    		throw new \Exception($error['message'], $error['code']);
     	}
     }
 
