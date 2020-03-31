@@ -89,6 +89,19 @@ class Converter {
         	$bling_data['marca'] = $data['manufacturer'];
         }
         
+        if (isset($data['image']) || isset($data['images'])) {
+        	$bling_data['imagens'] = [];
+        	if (!empty($data['image'])) {
+        		$bling_data['imagens'][] = ['url' => $data['image']];
+        	}
+        	
+        	if (is_array($data['images'])) {
+        		foreach ($data['images'] as $img) {
+        			$bling_data['imagens'][] = ['url' => $img];
+        		}
+        	}
+        }
+        
         if (isset($data['options'])) {
         	$bling_data['variacoes'] = [];
         	foreach ($data['options'] as $option) {

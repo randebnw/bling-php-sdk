@@ -19,6 +19,8 @@ abstract class Bling
     public $configurations;
     /** @var $namespace */
     private $namespace;
+    
+    private $total_requests = 0;
 
     public function __construct($configurations)
     {
@@ -162,6 +164,8 @@ abstract class Bling
         if(!$bundle){
             return false;
         }
+        
+        $this->total_requests++;
         return $this->hookBundle($bundle, $name, $arguments);
     }
 
@@ -170,6 +174,10 @@ abstract class Bling
             throw new \Exception($e->getMessage(), 1);
         }
         throw new \Exception(\json_encode(\json_decode($e->getResponse()->getBody()->getContents(), true)), 1);
+    }
+    
+    public function getTotalRequests() {
+    	return $this->total_requests;
     }
     
     protected function _getError($response) {

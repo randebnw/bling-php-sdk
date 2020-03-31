@@ -28,11 +28,7 @@ class Situacao extends Bling {
      */
     public function getSituacoes($modulo) {
         try {
-        	if ($situacao) {
-        		$situacao = (array) $situacao;
-        	}
-        	
-            $request = $this->configurations['guzzle']->get('situacao/' . $modulo . '/json/');
+        	$request = $this->configurations['guzzle']->get('situacao/' . $modulo . '/json/');
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response)) {
                 $list = [];
