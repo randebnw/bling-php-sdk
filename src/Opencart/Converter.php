@@ -91,13 +91,15 @@ class Converter {
         
         if (isset($data['image']) || isset($data['images'])) {
         	$bling_data['imagens'] = [];
-        	if (!empty($data['image'])) {
+        	if (isset($data['image']) && !empty($data['image'])) {
         		$bling_data['imagens'][] = ['url' => $data['image']];
         	}
         	
-        	if (is_array($data['images'])) {
+        	if (isset($data['images']) && is_array($data['images'])) {
         		foreach ($data['images'] as $img) {
-        			$bling_data['imagens'][] = ['url' => $img];
+        			if ($img) {
+        				$bling_data['imagens'][] = ['url' => $img];
+        			}
         		}
         	}
         }
