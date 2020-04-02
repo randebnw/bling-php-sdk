@@ -198,6 +198,7 @@ class Converter {
     		$oc_data['lastname'] = implode(' ', $names);
     	}
     	
+    	$oc_data['apelido'] = '';
     	$oc_data['email'] = $data['email'];
     	$oc_data['telephone'] = preg_replace('/([^0-9])/i', '', $data['fone']);
     	$oc_data['fax'] = preg_replace('/([^0-9])/i', '', $data['celular']);
@@ -216,8 +217,8 @@ class Converter {
     	$cpf_cnpj = preg_replace('/([^0-9])/i', '', $data['cnpj']);
     	if (strlen($cpf_cnpj) == 11) {
     		$oc_data['cpf'] = $cpf_cnpj;
-    		$oc_data['data_nascimento'] = $data['dataNascimento'];
-    		$oc_data['sexo'] = $data['sexo'] == \Bling\Core\Util::CLIENTE_SEXO_FEMININO ? 'f' : 'm';
+    		$oc_data['data_nascimento'] = isset($data['dataNascimento']) ? $data['dataNascimento'] : '';
+    		$oc_data['sexo'] = (isset($data['sexo']) && $data['sexo'] == \Bling\Core\Util::CLIENTE_SEXO_FEMININO) ? 'f' : 'm';
     	} else {
     		$oc_data['cnpj'] = $cpf_cnpj;
     		$oc_data['inscricao_estadual'] = $data['ie'];
@@ -228,6 +229,7 @@ class Converter {
 		$oc_data['address_2'] = $data['bairro'];
 		$oc_data['city']      = $data['cidade'];
 		$oc_data['numero']    = $data['numero'];
+		$oc_data['complemento']    = $data['complemento'];
 		$oc_data['postcode']  = preg_replace('/([^0-9])/i', '', $data['cep']);;
     	$oc_data['country_id'] = $config->get('config_country_id');
     	$oc_data['zone_id'] = isset($map_zones[$data['uf']]) ? $map_zones[$data['uf']]['zone_id'] : $config->get('config_zone_id');
