@@ -81,8 +81,9 @@ class Converter {
         	}
         }
         
-        if (isset($data['weigth'])) {
-        	$bling_data['peso_bruto'] = $weight_lib->convertToKg($data['weigth'], $data['weigth_class_id']);
+        if (isset($data['weight'])) {
+        	$bling_data['peso_bruto'] = $weight_lib->convertToKg($data['weight'], $data['weight_class_id']);
+        	$bling_data['peso_liq'] = $weight_lib->convertToKg($data['weight'], $data['weight_class_id']);
         }
         
         if (isset($data['manufacturer'])) {
@@ -138,8 +139,8 @@ class Converter {
     	$oc_data['mini_description'] = $data['descricaoCurta'];
     	$oc_data['description'] = $data['descricaoComplementar'];
     	$oc_data['price'] = $data['vlr_unit'];
-    	$oc_data['weigth'] = $data['peso_bruto'];
-    	$oc_data['weigth_class_id'] = $weight_lib->getIdByUnit('kg');
+    	$oc_data['weight'] = $data['peso_bruto'];
+    	$oc_data['weight_class_id'] = $weight_lib->getIdByUnit('kg');
     	$oc_data['quantity'] = $data['estoque'];
     	
     	/*if (isset($data['storage']) && is_array($data['storage'])) {
