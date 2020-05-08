@@ -30,24 +30,31 @@ class Deposito extends Bling {
      * @throws \Exception
      */
     public function getDepositos($situacao = '') {
+    	$list = [];
+    	$options = [];
+    	$allowed = ['I', 'A'];
+    	$success = false;
+    	
         try {
-        	$options = [];
-        	$allowed = ['I', 'A'];
         	if ($situacao) {
         		$options['query'] = ['situacao' => $situacao];
         	}
         	$request = $this->configurations['guzzle']->get('depositos/json/', $options);
             $response = \json_decode($request->getBody()->getContents(), true);
-            if ($response && is_array($response)) {
-            	$list = [];
+            if ($response && is_array($response) && isset($response['retorno']['depositos'])) {
+            	$success = true;
             	foreach ($response['retorno']['depositos'] as $item) {
             		$list[] = $item['deposito'];
             	}
-                return $list;
+            	return $list;
             }
-            return false;
         } catch (\Exception $e){
             return $this->ResponseException($e);
+        }
+        
+        if (!$success && isset($response['retorno']['erros'])) {
+        	$error = $this->_getError($response);
+        	throw new \Exception($error['message'], $error['code']);
         }
     }
 }

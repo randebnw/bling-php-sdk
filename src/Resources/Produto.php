@@ -12,6 +12,9 @@ use Bling\Core\Bling;
  * @version 1.0.0
  */
 class Produto extends Bling {
+	const DEFAULT_PRICE = 'd';
+	const CUSTOM_PRICE = 'c'; // multistore
+	
     public function __construct($configurations) {
         parent::__construct($configurations);
     }

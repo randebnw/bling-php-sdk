@@ -169,10 +169,17 @@ abstract class Bling
         return $this->hookBundle($bundle, $name, $arguments);
     }
 
-    public function ResponseException(\Exception $e) {
+	public function ResponseException(\Exception $e) {
     	if (!in_array('getResponse', \get_class_methods($e)) || is_null($e->getResponse())){
             throw new \Exception($e->getMessage(), 1);
         }
+        
+        $response = \json_decode($e->getResponse()->getBody()->getContents(), true);
+        if (isset($response['retorno']['erros'])) {
+        	$error = $this->_getError($response);
+        	throw new \Exception($error['message'], $error['code']);
+        }
+        
         throw new \Exception(\json_encode(\json_decode($e->getResponse()->getBody()->getContents(), true)), 1);
     }
     
@@ -180,17 +187,22 @@ abstract class Bling
     	return $this->total_requests;
     }
     
-    protected function _getError($response) {
+	protected function _getError($response) {
     	$code = -1;
     	$message = print_r($response, true);
     	if (isset($response['retorno']['erros'])) {
     		$error_copy = $response['retorno']['erros'];
     		$first = array_shift($response['retorno']['erros']);
+    		pr($first);
     		
     		if (isset($first['erro']['cod'], $first['erro']['msg'])) {
     			// trata um dos formatos de retorno de erro
     			$code = $first['erro']['cod'];
     			$message = $first['erro']['msg'];
+    		} else if (isset($first['cod'], $first['msg'])) {
+    			// trata outro formato de erro
+    			$code = $first['cod'];
+    			$message = $first['msg'];
     		} else {
     			// trata o outro formato de retorno de erro
     			$keys = array_keys($error_copy);

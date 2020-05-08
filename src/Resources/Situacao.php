@@ -27,19 +27,26 @@ class Situacao extends Bling {
      * @throws \Exception
      */
     public function getSituacoes($modulo) {
+    	$list = [];
+    	$success = false;
+    	
         try {
         	$request = $this->configurations['guzzle']->get('situacao/' . $modulo . '/json/');
             $response = \json_decode($request->getBody()->getContents(), true);
-            if ($response && is_array($response)) {
-                $list = [];
+            if ($response && is_array($response) && isset($response['retorno']['situacoes'])) {
+            	$success = true;
             	foreach ($response['retorno']['situacoes'] as $item) {
             		$list[] = $item['situacao'];
             	}
                 return $list;
             }
-            return false;
         } catch (\Exception $e){
             return $this->ResponseException($e);
+        }
+        
+        if (!$success && isset($response['retorno']['erros'])) {
+        	$error = $this->_getError($response);
+        	throw new \Exception($error['message'], $error['code']);
         }
     }
 }
