@@ -15,6 +15,13 @@ class Produto extends Bling {
 	const DEFAULT_PRICE = 'd';
 	const CUSTOM_PRICE = 'c'; // multistore
 	
+	const SITUACAO_ATIVO = 'Ativo';
+	const SITUACAO_INATIVO = 'Intivo';
+	
+	const FILTRO_ATIVO = 'A';
+	const FILTRO_INATIVO = 'I';
+	const FILTRO_EXCLUIDO = 'E';
+	
     public function __construct($configurations) {
         parent::__construct($configurations);
     }
@@ -98,16 +105,21 @@ class Produto extends Bling {
             }
             return false;
         } catch (\Exception $e){
-            return $this->ResponseException($e);
+            $this->ResponseException($e);
         }
     }
     
-    public function getProdutos($dataAlteracao, $page = 1) {
+    public function getProdutos($situacao = [], $page = 1) {
     	try {
+    		$filters = '';
+    		if ($situacao) {
+    			$filters = 'situacao[' . implode(',', $situacao) . ']';
+    		}
+    		
     		$request = $this->configurations['guzzle']->get(
-    				'produtos/json/',
-    				['query' => ['filters' => 'dataAlteracao[' . $dataAlteracao . ' TO ' . date('d/m/Y H:i:s') . ']']]
-    				);
+    			'produtos/page=' . (int)$page . '/json/',
+    			['query' => ['filters' => $filters]]
+    		);
     
     		$response = \json_decode($request->getBody()->getContents(), true);
     		if ($response && is_array($response) && isset($response['retorno']['produtos'])) {
@@ -120,7 +132,7 @@ class Produto extends Bling {
     
     		return false;
     	} catch (\Exception $e){
-    		return $this->ResponseException($e);
+    		$this->ResponseException($e);
     	}
     }
     
@@ -151,5 +163,14 @@ class Produto extends Bling {
         } catch (\Exception $e){
             return $this->ResponseException($e);
         }
+    }
+    
+    /**
+     * 
+     * @param string $situacao
+     * @return boolean
+     */
+    public static function isAtivo($situacao) {
+    	return $situacao == self::SITUACAO_ATIVO;
     }
 }

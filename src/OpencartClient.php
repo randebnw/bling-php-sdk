@@ -90,7 +90,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 		return self::$instance;
 	}
 	
-	public function init_maps() {
+	public function initMaps() {
 		if (is_null($this->map_categories) || is_null($this->map_manufacturer) || is_null($this->map_options)) {
 			$this->map_categories = [];
 			$this->map_manufacturer = [];
@@ -161,9 +161,9 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 * @since 6 de dez de 2018
 	 * @param unknown $item
 	 */
-	public function import_product($item) {
+	public function importProduct($item) {
 		if (is_null($this->map_product)) {
-			$this->init_maps();
+			$this->initMaps();
 		}
 		
 		$this->error = '';
@@ -222,18 +222,26 @@ class OpencartClient extends \Bling\Opencart\Base {
 		
 		// TODO - tratar combined options
 		if (isset($item['options'])) {
-			
 			$oc_options = [];
 			foreach ($item['options'] as $opt) {
-				if (isset($this->map_options[$opt['value']])) {
-					$oc_opt = $this->map_options[$opt['value']];
+				// TODO cadastrar o opcional se ele nao existir na loja
+				// TODO opcional: verificar primeiro se existe o nome depois o valor
+				if (isset($this->map_options[$opt['name']][$opt['value']])) {
+					$oc_opt = $this->map_options[$opt['name']][$opt['value']];
 					if (!isset($oc_options[$oc_opt['option_id']])) {
 						$oc_options[$oc_opt['option_id']] = [];
 					}
 					
-					$oc_opt['bling_id'] = $opt['id'];
 					$oc_opt['sku'] = $opt['sku'];
 					$oc_opt['quantity'] = $opt['quantity'];
+					$oc_opt['price'] = 0;
+					$oc_opt['price_prefix'] = '+';
+					
+					if ($opt['price'] != $item['price']) {
+						$oc_opt['price'] = abs($item['price'] - $opt['price']);
+						$oc_opt['price_prefix'] = $item['price'] < $opt['price'] ? '+' : '-';
+					}
+					
 					$oc_options[$oc_opt['option_id']][] = $oc_opt;
 				}
 			}

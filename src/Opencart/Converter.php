@@ -276,21 +276,20 @@ class Converter {
      * @param array $weight_lib
      */
     public static function toOpencartProduct(array $data, $config, $weight_lib) {
-    	$sync_name = $config->get('bling_api_sync_name');
-    	$sync_description = $config->get('bling_api_sync_description');
-    	$sync_price = $config->get('bling_api_sync_price');
-    	$sync_categories = $config->get('bling_api_sync_categories');
-    	$sync_brand = $config->get('bling_api_sync_brand');
-    	
     	$oc_data = [];
     	
     	$oc_data = [];
+    	$oc_data['subtract'] = $config->get('config_stock_subtract');
+    	$oc_data['shipping'] = $config->get('config_shipping_required');
+    	$oc_data['stock_status_id'] = $config->get('config_stock_status_id');
     	$oc_data['sku'] = $data['codigo'];
+    	$oc_data['ean'] = $data['gtin'];
     	$oc_data['name'] = $data['description'];
-    	$oc_data['status'] = $data['situacao'] == \Bling\Core\Util::PRODUTO_STATUS_ATIVO ? 1 : 0;
+    	$oc_data['status'] = \Bling\ResourcesProduto::isAtivo($data['situacao']) ? 1 : 0;
     	$oc_data['mini_description'] = $data['descricaoCurta'];
     	$oc_data['description'] = $data['descricaoComplementar'];
     	$oc_data['price'] = $data['vlr_unit'];
+    	$oc_data['special'] = 0; // TODO preco promocional
     	$oc_data['weight'] = $data['peso_bruto'];
     	$oc_data['weight_class_id'] = $weight_lib->getIdByUnit('kg');
     	$oc_data['quantity'] = $data['estoque'];
@@ -300,7 +299,6 @@ class Converter {
     		$oc_data['deposito']['estoque'] = $data['storage']['quantity'];
     	}*/
     	
-    	$oc_data['ean'] = $data['gtin'];
     	$oc_data['width'] = $data['largura'];
     	$oc_data['height'] = $data['altura'];
     	$oc_data['length'] = $data['profundidade'];
@@ -314,21 +312,24 @@ class Converter {
     		}
     	}
     	
-    	if ($sync_brand) {
-    		$oc_data['manufacturer'] = $data['marca'];
-    	}
+    	$oc_data['manufacturer'] = $data['marca'];
     	
     	if (isset($data['variacoes'])) {
     		$oc_data['options'] = [];
     		foreach ($data['variacoes'] as $item) {
-    			$variacao = $item['variacao'];
-    			list($option_name, $option_value) = explode(':', $variacao['nome']);
     			$oc_data['options'][] = [
-    				'option_name' => $option_name,
-    				'option_value' => $option_value,
-    				'option_sku' => $variacao['codigo'],
+    				'sku' => $item['codigo'],
+					'name' => $item['nome'],
+					'value' => $item['valor'],
+					'quantity' => $item['estoque'],
+					'price' => $item['preco']
     			];
     		}
+    	}
+    	
+    	$empty_fields = ['model', 'upc', 'jan', 'isbn', 'mpn', 'location', 'minimum', 'points', 'sort_order', 'tax_class_id'];
+    	foreach ($empty_fields as $item) {
+    		$oc_data[$item] = '';
     	}
     	
     	return $oc_data;

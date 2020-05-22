@@ -50,7 +50,7 @@ class Product extends \Bling\Opencart\Base {
 		$sql .= "minimum = '" . (int)$data['minimum'] . "', ";
 		$sql .= "subtract = '" . (int)$data['subtract'] . "', ";
 		$sql .= "stock_status_id = '" . (int)$data['stock_status_id'] . "', ";
-		$sql .= "date_available = '" . $this->db->escape($data['date_available']) . "', ";
+		$sql .= "date_available = '" . $this->db->escape(date('Y-m-d', strtotime('1 day ago'))) . "', ";
 		
 		if ($this->sync_brand) {
 			$sql .= "manufacturer_id = '" . (int)$data['manufacturer_id'] . "', ";
@@ -84,22 +84,20 @@ class Product extends \Bling\Opencart\Base {
 		$this->db->query("INSERT INTO " . DB_PREFIX . "product_to_store SET product_id = '" . (int)$product_id . "', store_id = 0");
 		
 		// CATEGORIAS
-		if ($this->sync_categories) {
+		if ($this->sync_categories && $data['categories']) {
 			foreach ($data['categories'] as $category_id) {
 				$this->db->query("INSERT INTO " . DB_PREFIX . "product_to_category SET product_id = '" . (int)$product_id . "', category_id = '" . (int)$category_id . "', is_bling = 1");
 			}
 		}
 		
 		// PROMOCOES
-		if ($this->sync_price) {
-			if ($data['special'] > 0) {
-				$sql = "INSERT INTO " . DB_PREFIX . "product_special ";
-				$sql .= "SET product_id = '" . (int)$product_id . "', ";
-				$sql .= "customer_group_id = '" . (int)$this->customer_group_id . "', ";
-				$sql .= "price = '" . (float)$data['special'] . "', ";
-				$sql .= "priority = '1', date_start = '', date_end = '' ";
-				$this->db->query($sql);
-			}
+		if ($this->sync_price && $data['special'] > 0) {
+			$sql = "INSERT INTO " . DB_PREFIX . "product_special ";
+			$sql .= "SET product_id = '" . (int)$product_id . "', ";
+			$sql .= "customer_group_id = '" . (int)$this->customer_group_id . "', ";
+			$sql .= "price = '" . (float)$data['special'] . "', ";
+			$sql .= "priority = '1', date_start = '', date_end = '' ";
+			$this->db->query($sql);
 		}
 		
 		// OPCIONAIS
@@ -124,8 +122,9 @@ class Product extends \Bling\Opencart\Base {
 						option_value_id = '" . (int)$product_option_value['id'] . "', 
 						quantity = " . (int)$product_option_value['quantity'] . ", 
 						subtract = " . (int)$data['subtract'] . ", 
-						price = '0.00', price_prefix = '+', points = 0, points_prefix = '+', 
-						weight = '0.00', weight_prefix = '+'
+						price = " . (float)$product_option_value['price'] . ", 
+						price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "', 
+						points = 0, points_prefix = '+', weight = '0.00', weight_prefix = '+'
 					");
 				}
 			}
@@ -138,7 +137,6 @@ class Product extends \Bling\Opencart\Base {
 			$this->db->query("INSERT INTO " . DB_PREFIX . "url_alias SET query = 'product_id=" . (int)$product_id . "', keyword = '" . $this->db->escape($keyword) . "'");
 		}
 		
-		$this->cache->delete('product');
 		return $product_id;
 	}
 	
@@ -164,7 +162,7 @@ class Product extends \Bling\Opencart\Base {
 		$sql .= "width = '" . (float)$data['width'] . "', ";
 		$sql .= "height = '" . (float)$data['height'] . "', ";
 		$sql .= "length_class_id = '" . (int)$data['length_class_id'] . "', ";
-		$sql .= "status = '" . (int)$data['status'] . "', ";
+		$sql .= "status = " . (int)$data['status'] . ", ";
 		$sql .= "api_modified = NOW() ";
 		$sql .= "WHERE product_id = '" . (int)$product_id . "'";
 		$this->db->query($sql);
@@ -190,17 +188,15 @@ class Product extends \Bling\Opencart\Base {
 		}
 		
 		// PROMOCOES
-		if ($this->sync_price) {
-			if ($data['special'] > 0) {
-				$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = '" . (int)$product_id . "'");
+		if ($this->sync_price && $data['special'] > 0) {
+			$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = '" . (int)$product_id . "'");
 				
-				$sql = "INSERT INTO " . DB_PREFIX . "product_special ";
-				$sql .= "SET product_id = '" . (int)$product_id . "', ";
-				$sql .= "customer_group_id = '" . (int)$this->customer_group_id . "', ";
-				$sql .= "price = '" . (float)$data['special'] . "', ";
-				$sql .= "priority = '1', date_start = '', date_end = '' ";
-				$this->db->query($sql);
-			}
+			$sql = "INSERT INTO " . DB_PREFIX . "product_special ";
+			$sql .= "SET product_id = '" . (int)$product_id . "', ";
+			$sql .= "customer_group_id = '" . (int)$this->customer_group_id . "', ";
+			$sql .= "price = '" . (float)$data['special'] . "', ";
+			$sql .= "priority = '1', date_start = '', date_end = '' ";
+			$this->db->query($sql);
 		}
 		
 		// CATEGORIAS
@@ -222,7 +218,7 @@ class Product extends \Bling\Opencart\Base {
 					if ($item['option_id'] == $option_id) {
 						$map_product_option_id[$option_id] = $item['product_option_id'];
 						foreach ($values as $key => $v) {
-							if ($v['id'] == $item['option_value_id']) {
+							if ($v['sku'] == $item['option_sku']) {
 								$data['options'][$option_id]['values'][$key]['product_option_value_id'] = $item['product_option_value_id'];
 							}
 						}
@@ -250,6 +246,8 @@ class Product extends \Bling\Opencart\Base {
 				foreach ($values as $product_option_value) {
 					// se ainda nao existe na loja, inclui
 					// TODO soma automatica de estoque
+					
+					// TODO option_value_id
 					if (!isset($product_option_value['product_option_value_id'])) {
 						$sql = "
 							INSERT INTO " . DB_PREFIX . "product_option_value SET
@@ -260,15 +258,22 @@ class Product extends \Bling\Opencart\Base {
 							option_value_id = '" . (int)$product_option_value['id'] . "',
 							quantity = " . (int)$product_option_value['quantity'] . ",
 							subtract = " . (int)$data['subtract'] . ",
-							price = '0.00', price_prefix = '+', points = 0, points_prefix = '+',
-							weight = '0.00', weight_prefix = '+'
+							price = " . (float)$product_option_value['price'] . ", 
+							price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "',
+							points = 0, points_prefix = '+', weight = '0.00', weight_prefix = '+'
 						";
 					} else {
 						// se ja existe, soh faz o update
 						$sql = "
 							UPDATE " . DB_PREFIX . "product_option_value SET
-							quantity = " . (int)$product_option_value['quantity'] . ",
-							WHERE product_option_value_id = " . $product_option_value['product_option_value_id'];
+							quantity = " . (int)$product_option_value['quantity'] . " ";
+						if ($this->sync_price) {
+							$sql .= "
+								, price = " . (float)$product_option_value['price'] . "
+								, price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "'";
+						}
+					
+						$sql .= "WHERE product_option_value_id = " . $product_option_value['product_option_value_id'];
 					}
 					
 					$options_values_id[] = $product_option_value['option_value_id'];
@@ -279,8 +284,6 @@ class Product extends \Bling\Opencart\Base {
 				$this->db->query("DELETE FROM " . DB_PREFIX . "product_option_value WHERE option_value_id NOT IN (" . implode(",", $options_values_id) . ") ");
 			}
 		}
-		
-		$this->cache->delete('product');
 	}
 	
 	public function simple_update($product_id, $data) {
