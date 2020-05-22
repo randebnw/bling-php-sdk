@@ -13,7 +13,6 @@ class Product extends \Bling\Opencart\Base {
 	private $sync_description;
 	private $sync_brand;
 	
-	// TODO ao salvar produtos pelo painel, recuperar informacoes de bling_id dos opcionais
 	public function __construct($registry) {
 		parent::__construct($registry);
 		$this->language_id = $registry->get('config')->get('config_language_id');
@@ -27,18 +26,17 @@ class Product extends \Bling\Opencart\Base {
 	}
 	
 	public function get_all() {
-		$sql = "SELECT product_id, bling_id FROM `" . DB_PREFIX . "product` WHERE bling_id IS NOT NULL AND bling_id > 0 ";
+		$sql = "SELECT product_id, sku FROM `" . DB_PREFIX . "product` WHERE sku IS NOT NULL AND sku != '' ";
 		$result = $this->db->query($sql);
 		
 		return $result->rows;
 	}
 	
 	public function insert($data) {
-		\Bling\Util\Log::debug('NEW PRODUCT INSERT > ' . $data['bling_id']);
+		\Bling\Util\Log::debug('NEW PRODUCT INSERT > ' . $data['sku']);
 		
 		$sql = "INSERT INTO " . DB_PREFIX . "product ";
-		$sql .= "SET bling_id = '" . $this->db->escape($data['bling_id']) . "', ";
-		$sql .= "model = '" . $this->db->escape($data['model']) . "', ";
+		$sql .= "SET model = '" . $this->db->escape($data['model']) . "', ";
 		$sql .= "sku = '" . $this->db->escape($data['sku']) . "', ";
 		$sql .= "upc = '" . $this->db->escape($data['upc']) . "', ";
 		$sql .= "ean = '" . $this->db->escape($data['ean']) . "', ";
@@ -122,7 +120,6 @@ class Product extends \Bling\Opencart\Base {
 						product_option_id = '" . (int)$product_option_id . "', 
 						product_id = '" . (int)$product_id . "',
 						option_sku = '" . $this->db->escape($product_option_value['sku']) . "',
-						bling_id = '" . $this->db->escape($product_option_value['bling_id']) . "',
 						option_id = '" . (int)$option_id . "', 
 						option_value_id = '" . (int)$product_option_value['id'] . "', 
 						quantity = " . (int)$product_option_value['quantity'] . ", 
@@ -194,8 +191,9 @@ class Product extends \Bling\Opencart\Base {
 		
 		// PROMOCOES
 		if ($this->sync_price) {
-			$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = '" . (int)$product_id . "'");
 			if ($data['special'] > 0) {
+				$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = '" . (int)$product_id . "'");
+				
 				$sql = "INSERT INTO " . DB_PREFIX . "product_special ";
 				$sql .= "SET product_id = '" . (int)$product_id . "', ";
 				$sql .= "customer_group_id = '" . (int)$this->customer_group_id . "', ";
@@ -258,7 +256,6 @@ class Product extends \Bling\Opencart\Base {
 							product_option_id = '" . (int)$product_option_id . "',
 							product_id = '" . (int)$product_id . "',
 							option_sku = '" . $this->db->escape($product_option_value['sku']) . "',
-							bling_id = '" . $this->db->escape($product_option_value['bling_id']) . "',
 							option_id = '" . (int)$option_id . "',
 							option_value_id = '" . (int)$product_option_value['id'] . "',
 							quantity = " . (int)$product_option_value['quantity'] . ",
@@ -272,10 +269,9 @@ class Product extends \Bling\Opencart\Base {
 							UPDATE " . DB_PREFIX . "product_option_value SET
 							quantity = " . (int)$product_option_value['quantity'] . ",
 							WHERE product_option_value_id = " . $product_option_value['product_option_value_id'];
-						
-						$options_values_id[] = $product_option_value['product_option_value_id'];
 					}
 					
+					$options_values_id[] = $product_option_value['option_value_id'];
 					$this->db->query($sql);
 				}
 				
@@ -303,8 +299,9 @@ class Product extends \Bling\Opencart\Base {
 		$this->db->query($sql);
 		
 		if ($this->sync_price) {
-			$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = " . (int)$product_id);
 			if ($data['special'] > 0) {
+				$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = " . (int)$product_id);
+				
 				$sql = "INSERT INTO " . DB_PREFIX . "product_special ";
 				$sql .= "SET product_id = '" . (int)$product_id . "', ";
 				$sql .= "customer_group_id = '" . (int)$this->customer_group_id . "', ";
@@ -315,6 +312,39 @@ class Product extends \Bling\Opencart\Base {
 		}
 		
 		$this->cache->delete('product');
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 21 de mai de 2020
+	 * @param unknown $sku
+	 * @param unknown $quantity
+	 */
+	public function updateStock($sku, $quantity) {
+		$sql = "SELECT product_id FROM " . DB_PREFIX . "product WHERE sku = '" . $this->db->escape($sku) . "'";
+		$product = $this->db->query($sql);
+		$success = false;
+		if (isset($product->row['product_id'])) {
+			// eh produto comum, atualiza o estoque principal
+			$sql = "UPDATE " . DB_PREFIX . "product SET quantity = " . (int) $quantity . ", api_modified = NOW() WHERE product_id = " . (int) $product->row['product_id'];
+			$this->db->query($sql);
+			$success = true;
+		} else {
+			// se nao, entao pode ser um opcional
+			$sql = "SELECT product_id FROM " . DB_PREFIX . "product_option_value WHERE option_sku = '" . $this->db->escape($sku) . "'";
+			$product = $this->db->query($sql);
+			if (isset($product->row['product_id'])) {
+				$sql = "UPDATE " . DB_PREFIX . "product_option_value SET quantity = " . (int) $quantity . " WHERE option_sku = '" . $this->db->escape($sku) . "'";
+				$this->db->query($sql);
+				
+				// TODO soma automatica de estoque
+				$success = true;
+			}
+		}
+		
+		$this->cache->delete('product');
+		return $success;
 	}
 }
 ?>

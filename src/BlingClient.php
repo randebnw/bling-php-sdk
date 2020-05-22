@@ -14,4 +14,38 @@ class BlingClient extends Bling {
   	public function __construct($configurations) {
   		parent::__construct($configurations);
   	}
+  	
+  	/**
+  	 * 
+  	 * @author Rande A. Moreira
+  	 * @since 21 de mai de 2020
+  	 * @param unknown $data
+  	 * @param unknown $customer_info
+  	 * @param unknown $products
+  	 * @param unknown $order_totals
+  	 * @param unknown $map_zones
+  	 * @param unknown $config
+  	 */
+  	public function addOrder($data, $customer_info, $products, $order_totals, $map_zones, $config) {
+  		$bling_data = \Bling\Opencart\Converter::toBlingOrder($data, $customer_info, $products, $order_totals, $map_zones, $config);
+  		return $this->createPedido($data);
+  	}
+  	
+  	/**
+  	 * 
+  	 * @author Rande A. Moreira
+  	 * @since 21 de mai de 2020
+  	 * @param unknown $customer
+  	 * @param unknown $address
+  	 */
+  	public function addCustomer($customer, $address) {
+  		$search = $customer['cpf'] ? $customer['cpf'] : $customer['cnpj'];
+  		$contato = $this->getContato($search);
+  		if ($contato) {
+  			return $contato['id'];
+  		}
+  		
+  		$bling_data = \Bling\Opencart\Converter::toBlingCustomer($customer, $address);
+  		return $this->createContato();
+  	}
 }

@@ -101,4 +101,55 @@ class Produto extends Bling {
             return $this->ResponseException($e);
         }
     }
+    
+    public function getProdutos($dataAlteracao, $page = 1) {
+    	try {
+    		$request = $this->configurations['guzzle']->get(
+    				'produtos/json/',
+    				['query' => ['filters' => 'dataAlteracao[' . $dataAlteracao . ' TO ' . date('d/m/Y H:i:s') . ']']]
+    				);
+    
+    		$response = \json_decode($request->getBody()->getContents(), true);
+    		if ($response && is_array($response) && isset($response['retorno']['produtos'])) {
+    			$list = [];
+    			foreach ($response['retorno']['produtos'] as $item) {
+    				$list[] = $item['produto'];
+    			}
+    			return $list;
+    		}
+    
+    		return false;
+    	} catch (\Exception $e){
+    		return $this->ResponseException($e);
+    	}
+    }
+    
+    /**
+     * 
+     * @author Rande A. Moreira
+     * @since 20 de mai de 2020
+     * @param unknown $dataAlteracao
+     * @return mixed|boolean
+     */
+	public function getProdutosPorData($dataAlteracao, $page = 1) {
+        try {
+        	$request = $this->configurations['guzzle']->get(
+                'produtos/page=' . (int)$page . '/json/',
+            	['query' => ['filters' => 'dataAlteracao[' . $dataAlteracao . ' TO ' . date('d/m/Y H:i:s') . ']']]
+            );
+            
+            $response = \json_decode($request->getBody()->getContents(), true);
+            if ($response && is_array($response) && isset($response['retorno']['produtos'])) {
+            	$list = [];
+            	foreach ($response['retorno']['produtos'] as $item) {
+            		$list[] = $item['produto'];
+            	}
+            	return $list;
+            }
+            
+            return false;
+        } catch (\Exception $e){
+            return $this->ResponseException($e);
+        }
+    }
 }

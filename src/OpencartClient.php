@@ -43,12 +43,6 @@ class OpencartClient extends \Bling\Opencart\Base {
 	
 	/**
 	 *
-	 * @var Attribute
-	 */
-	private $model_attribute;
-	
-	/**
-	 *
 	 * @var Option
 	 */
 	private $model_option;
@@ -62,7 +56,6 @@ class OpencartClient extends \Bling\Opencart\Base {
 	private $map_categories;
 	private $map_sub_categories;
 	private $map_manufacturer;
-	private $map_attributes;
 	private $map_product;
 	private $map_options;
 	
@@ -86,7 +79,6 @@ class OpencartClient extends \Bling\Opencart\Base {
 			self::$instance->model_product = new \Bling\Opencart\Product($registry);
 			self::$instance->model_category = new \Bling\Opencart\Category($registry);
 			self::$instance->model_manufacturer = new \Bling\Opencart\Manufacturer($registry);
-			self::$instance->model_attribute = new \Bling\Opencart\Attribute($registry);
 			self::$instance->model_option = new \Bling\Opencart\Option($registry);
 			self::$instance->model_order = new \Bling\Opencart\Order($registry);
 			self::$instance->config = new \Bling\Opencart\Config($registry->get('config'));
@@ -125,7 +117,8 @@ class OpencartClient extends \Bling\Opencart\Base {
 			$options = $this->model_option->get_all();
 			foreach ($options as $option_id => $item) {
 				foreach ($item['values'] as $opt) {
-					$this->map_options[$opt['name']] = $opt;
+					// mapa no formato "NomeOpcional/ValorOpcional" => dados do opcional na loja
+					$this->map_options[$item['name']][$opt['name']] = $opt;
 				}
 			}
 		}
@@ -229,7 +222,6 @@ class OpencartClient extends \Bling\Opencart\Base {
 		
 		// TODO - tratar combined options
 		if (isset($item['options'])) {
-			pr($item['options']);
 			
 			$oc_options = [];
 			foreach ($item['options'] as $opt) {
@@ -247,7 +239,6 @@ class OpencartClient extends \Bling\Opencart\Base {
 			}
 			
 			$item['options'] = $oc_options;
-			pr($item['options']);
 		}
 		
 		$product_id = 0;
@@ -269,15 +260,12 @@ class OpencartClient extends \Bling\Opencart\Base {
 	/**
 	 * 
 	 * @author Rande A. Moreira
-	 * @since 6 de dez de 2018
-	 * @param unknown $tgp_product
+	 * @since 21 de mai de 2020
+	 * @param unknown $sku
+	 * @param unknown $quantity
 	 */
-	public function simple_update_product($product) {
-		if ($product) {
-			$this->model_product->simple_update($product);
-		}
-		
-		return false;
+	public function updateStock($sku, $quantity) {
+		return $this->model_product->updateStock($sku, $quantity);
 	}
 	
 	/**
@@ -294,78 +282,6 @@ class OpencartClient extends \Bling\Opencart\Base {
 		return false;
 	}
 	
-	/**
-	 *
-	 * @author Rande A. Moreira
-	 * @since 16 de jun de 2019
-	 * @param unknown $bling_id
-	 */
-	public function update_order_status($order, $tgp_status) {
-		$bling_ids = explode('#', $order['bling_ids']);
-		return $this->api->update_order_status($bling_ids, $tgp_status);
-	}
-	
-	public function update_order_status_from_dc($order, $order_status_map, $model, &$emails_sent) {
-		$bling_ids = explode('#', $order['bling_ids']);
-		$tgp_status = $this->api->get_order_status($bling_ids);
-		if ($tgp_status && $tgp_status->rows) {
-			$all_status = [];
-			foreach ($tgp_status->rows as $item) {
-				$all_status[] = $item['status'];
-			}
-			
-			$all_status = array_unique($all_status);
-			
-			// so altera o status do pedido na loja se o status de todos os pedidos relacionados foram os mesmos
-			if (count($all_status) == 1) {
-				$final_status = array_shift($all_status);
-				if (isset($order_status_map[$final_status])) {
-					$new_status = $order_status_map[$final_status];
-					if ($new_status && $new_status != $order['order_status_id']) {
-						$model->update($order['order_id'], $new_status, 'Atualização automática de status', true);
-						$this->model->update_tgp_order_status($order['order_id'], $final_status);
-						$emails_sent++;
-					}
-				}	
-			}
-		}
-		
-		// se o status for retornado pela API, mas nao estiver mapeado no sistema, vai passar como "true"
-		return $tgp_status;
-	}
-	
-	/**
-	 * 
-	 * @author Rande A. Moreira
-	 * @since 11 de dez de 2018
-	 */
-	public function get_companies() {
-		$companies = $this->api->get_companies();
-		$oc_companies = [];
-		if ($companies) {
-			foreach ($companies as $item) {
-				$oc_companies[] = \Bling\Helper::tgp_company_2_oc_company($item);
-			}
-		}
-		return $oc_companies;
-	}
-	
-	/**
-	 * 
-	 * @author Rande A. Moreira
-	 * @since 11 de dez de 2018
-	 */
-	public function get_customer_groups() {
-		$groups = $this->api->get_customer_groups();
-		$oc_groups = [];
-		if ($groups) {
-			foreach ($groups as $item) {
-				$oc_groups[] = \Bling\Helper::tgp_customer_group_2_oc_customer_group($item);
-			}
-		}
-		return $oc_groups;
-	}
-	
 	public function get_orders($extra_fields = []) {
 		return $this->model->get_orders($extra_fields);
 	}
@@ -375,8 +291,18 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 * @author Rande A. Moreira
 	 * @since 15 de abr de 2020
 	 */
-	public function get_orders_to_export() {
-		return $this->model_order->get_orders_to_export();
+	public function getOrdersToExport() {
+		return $this->model_order->getOrdersToExport();
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 21 de mai de 2020
+	 * @param unknown $bling_id
+	 */
+	public function getOrderByBlingId($bling_id) {
+		return $this->model_order->getOrderByBlingId($bling_id);
 	}
 	
 	/**
@@ -384,8 +310,8 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 * @author Rande A. Moreira
 	 * @since 15 de abr de 2020
 	 */
-	public function get_order_totals() {
-		return $this->model_order->get_order_totals($order_id);
+	public function getOrderTotals() {
+		return $this->model_order->getOrderTotals($order_id);
 	}
 	
 	/**
@@ -393,12 +319,17 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 * @author Rande A. Moreira
 	 * @since 15 de abr de 2020
 	 */
-	public function get_order_products() {
-		return $this->model_order->get_order_products($order_id);
+	public function getOrderProducts() {
+		return $this->model_order->getOrderProducts($order_id);
 	}
 	
-	public function get_orders_paid() {
-		return $this->model->get_orders_paid();
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 21 de mai de 2020
+	 */
+	public function getOrdersToUpdate() {
+		return $this->model_order->getOrdersToUpdate();
 	}
 	
 	/**

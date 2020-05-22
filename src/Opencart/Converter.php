@@ -124,12 +124,164 @@ class Converter {
     /**
      * 
      * @author Rande A. Moreira
+     * @since 21 de mai de 2020
+     * @param unknown $data
+     * @param unknown $address
+     * @return string
+     */
+    public static function toBlingCustomer($data, $address) {
+    	$cliente = [];
+    	if ($data['cpf']) {
+    		$cliente['nome'] = $data['firstname'] . ' ' . $data['lastname'];
+    		$cliente['tipoPessoa'] = \Bling\Resources\Contato::PESSOA_FISICA;
+    		$cliente['cpf_cnpj'] = $data['cpf'];
+    		$cliente['ie_rg'] = $data['rg'];
+    		$cliente['sexo'] = $data['sexo'] == 'm' ? \Bling\Resources\Contato::SEXO_M : \Bling\Resources\Contato::SEXO_F;
+    		if ($data['data_nascimento'] && $data['data_nascimento'] != '0000-00-00') {
+    			$cliente['dataNascimento'] = date('d/m/Y', strtotime($data['data_nascimento']));
+    		}
+    		
+    		$cliente['contribuinte'] = \Bling\Resources\Contato::CONTRIBUINTE_NAO;
+    	} else {
+    		$cliente['nome'] = $data['razao_social'];
+    		$cliente['tipoPessoa'] = \Bling\Resources\Contato::PESSOA_JURIDICA;
+    		$cliente['cpf_cnpj'] = $data['cnpj'];
+    		$cliente['ie_rg'] = $data['inscricao_estadual'] ? $data['inscricao_estadual'] : \Bling\Resources\Contato::IE_ISENTO;
+    		$cliente['contribuinte'] = $data['inscricao_estadual'] ? \Bling\Resources\Contato::CONTRIBUINTE : \Bling\Resources\Contato::CONTRIBUINTE_ISENTO;
+    	}
+    	 
+    	$cliente['fone'] = $data['telephone'];
+    	$cliente['celular'] = $data['fax'];
+    	$cliente['email'] = $data['email'];
+    	
+    	$cliente['endereco'] = $address['address_1'];
+    	$cliente['numero'] = $address['numero'];
+    	$cliente['complemento'] = $address['complemento'];
+    	$cliente['bairro'] = $address['address_2'];
+    	$cliente['cep'] = $address['postcode'];
+    	$cliente['cidade'] = $address['city'];
+    	$cliente['uf'] = $address['uf'];
+    	$cliente['tipos_contatos'][] = ['tipoContato' => ['descricao' => \Bling\Resources\Contato::CONTATO_CLIENTE]];
+    	
+    	return $cliente;
+    }
+    
+    /**
+     * 
+     * @author Rande A. Moreira
+     * @since 21 de mai de 2020
+     * @param array $data
+     * @param unknown $customer_info
+     * @param unknown $products
+     * @param unknown $order_totals
+     * @param unknown $config
+     */
+    public static function toBlingOrder(array $data, $customer_info, $products, $order_totals, $config) {
+    	$bling_data = array();
+    	$bling_data['data'] = date('d/m/Y', strtotime($data['date_added']));
+    	$bling_data['numero_loja'] = $data['order_id'];
+    	$bling_data['loja'] = $config->get('bling_api_store_code');
+    	
+    	$cliente['id'] = $customer_info['bling_id'];
+    	if ($data['cpf']) {
+    		$cliente['nome'] = $customer_info['firstname'] . ' ' . $customer_info['lastname'];
+    		$cliente['tipoPessoa'] = \Bling\Resources\Contato::PESSOA_FISICA;
+    		$cliente['cpf_cnpj'] = $data['cpf'];
+    	} else {
+    		$cliente['nome'] = $data['razao_social'];
+    		$cliente['tipoPessoa'] = \Bling\Resources\Contato::PESSOA_JURIDICA;
+    		$cliente['cpf_cnpj'] = $data['cnpj'];
+    		$cliente['ie'] = $data['inscricao_estadual'] ? $data['inscricao_estadual'] : \Bling\Resources\Contato::IE_ISENTO;
+     		$cliente['contribuinte'] = $data['inscricao_estadual'] ? \Bling\Resources\Contato::CONTRIBUINTE : \Bling\Resources\Contato::CONTRIBUINTE_ISENTO;
+    	}
+    	
+    	$cliente['endereco'] = $data['payment_address_1'];
+    	$cliente['numero'] = $data['payment_numero'];
+    	$cliente['complemento'] = $data['payment_complemento'];
+    	$cliente['bairro'] = $data['payment_address_2'];
+    	$cliente['cep'] = $data['payment_postcode'];
+    	$cliente['cidade'] = $data['payment_city'];
+    	$cliente['uf'] = $data['payment_uf'];
+    	$cliente['fone'] = $data['telephone'];
+    	$cliente['celular'] = $data['fax'];
+    	$cliente['email'] = $data['email'];
+    	$bling_data['cliente'] = $cliente;
+    	
+    	$has_shipping = false;
+    	$shipping_value = 0;
+    	$discount_value = 0;
+    	foreach ($order_totals as $item) {
+    		if ($item['code'] == 'shipping') {
+    			$has_shipping = true;
+    			$shipping_value = $item['value'];
+    		}
+    		
+    		if ($item['value'] < 0) {
+    			$discount_value += abs($total['value']);
+    		}
+    	}
+    	
+    	if ($has_shipping && $data['shipping_code']) {
+    		$transporte['transportadora'] = $data['shipping_company_name'];
+    		if ($data['is_tracking']) {
+    			$transporte['servico_correios'] = $data['servico_correios'];
+    		}
+    		
+    		$dados_etiqueta['nome'] = $data['shipping_firstname'] . ' ' . $data['shipping_firstname'];
+    		$dados_etiqueta['endereco'] = $data['shipping_address_1'];
+    		$dados_etiqueta['numero'] = $data['shipping_numero'];
+    		$dados_etiqueta['complemento'] = $data['shipping_complemento'];
+    		$dados_etiqueta['bairro'] = $data['shipping_address_2'];
+    		$dados_etiqueta['cep'] = $data['shipping_postcode'];
+    		$dados_etiqueta['cidade'] = $data['shipping_city'];
+    		$dados_etiqueta['uf'] = $data['shipping_uf'];
+    		$transporte['dados_etiqueta'] = $dados_etiqueta;
+    		
+    		// TODO volumes/codigo rastreamento
+    		$bling_data['transporte'] = $transporte;
+    	}
+    	
+    	$bling_data['itens'] = [];
+    	foreach ($products as $item) {
+    		$bling_data['itens'][] = [
+    			'item' => [
+    				'codigo' => $item['sku'],
+    				'descricao' => $item['name'],
+    				'qtde' => $item['quantity'],
+    				'vlr_unit' => $item['price']
+    			] 
+    		];
+    	}
+    	
+    	$map_payment = $config->get('bling_api_map_payment');
+    	if (isset($map_payment[$data['payment_code']])) {
+    		$bling_data['idFormaPagamento'] = $map_payment[$data['payment_code']];
+    		// TODO parcelas
+    	}
+    	
+    	$bling_data['vlr_frete'] = $shipping_value;
+    	$bling_data['vlr_desconto'] = $discount_value;
+    	$bling_data['obs'] = $oc_order['comment'];
+    	$bling_data['obs_internas'] = 'Pedido cadastrado pela loja virtual.';
+		
+		return $bling_data;
+    }
+    
+    /**
+     * 
+     * @author Rande A. Moreira
      * @since 4 de mar de 2020
      * @param array $data
      * @param array $config
      * @param array $weight_lib
      */
     public static function toOpencartProduct(array $data, $config, $weight_lib) {
+    	$sync_name = $config->get('bling_api_sync_name');
+    	$sync_description = $config->get('bling_api_sync_description');
+    	$sync_price = $config->get('bling_api_sync_price');
+    	$sync_categories = $config->get('bling_api_sync_categories');
+    	$sync_brand = $config->get('bling_api_sync_brand');
+    	
     	$oc_data = [];
     	
     	$oc_data = [];
@@ -162,7 +314,9 @@ class Converter {
     		}
     	}
     	
-    	$oc_data['manufacturer'] = $data['marca'];
+    	if ($sync_brand) {
+    		$oc_data['manufacturer'] = $data['marca'];
+    	}
     	
     	if (isset($data['variacoes'])) {
     		$oc_data['options'] = [];
