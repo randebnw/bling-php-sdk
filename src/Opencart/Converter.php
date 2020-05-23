@@ -283,44 +283,67 @@ class Converter {
     	$oc_data['shipping'] = $config->get('config_shipping_required');
     	$oc_data['stock_status_id'] = $config->get('config_stock_status_id');
     	$oc_data['sku'] = $data['codigo'];
-    	$oc_data['ean'] = $data['gtin'];
-    	$oc_data['name'] = $data['description'];
-    	$oc_data['status'] = \Bling\ResourcesProduto::isAtivo($data['situacao']) ? 1 : 0;
+    	$oc_data['name'] = $data['descricao'];
+    	$oc_data['status'] = \Bling\Resources\Produto::isAtivo($data['situacao']) ? 1 : 0;
     	$oc_data['mini_description'] = $data['descricaoCurta'];
     	$oc_data['description'] = $data['descricaoComplementar'];
-    	$oc_data['price'] = $data['vlr_unit'];
-    	$oc_data['special'] = 0; // TODO preco promocional
-    	$oc_data['weight'] = $data['peso_bruto'];
-    	$oc_data['weight_class_id'] = $weight_lib->getIdByUnit('kg');
-    	$oc_data['quantity'] = $data['estoque'];
+    	$oc_data['price'] = $data['preco'];
+    	$oc_data['special'] = 0;
+    	
+    	// trata campos exclusivos de produto e que nao existem para servicos
+    	if (!\Bling\Resources\Produto::isServico($data['tipo'])) {
+    		$oc_data['quantity'] = $data['estoqueAtual'];
+    		$oc_data['weight'] = $data['pesoBruto'];
+    		$oc_data['ean'] = $data['gtin'];
+    		$oc_data['weight_class_id'] = $weight_lib->getIdByUnit('kg');
+    		
+    		$oc_data['width'] = $data['larguraProduto'];
+    		$oc_data['height'] = $data['alturaProduto'];
+    		$oc_data['length'] = $data['profundidadeProduto'];
+    		 
+    		$unidadesMedida = \Bling\Core\Util::getUnidadesMedida();
+    		$map_length = $config->get('bling_api_map_length_id');
+    		foreach ($unidadesMedida as $key => $label) {
+    			if ($label == $data['unidadeMedida']) {
+    				$oc_data['length_class_id'] = $map_length[$key];
+    				break;
+    			}
+    		}
+    	} else {
+    		$oc_data['quantity'] = 999;
+    		$oc_data['weight'] = 0;
+    		$oc_data['ean'] = '';
+    		$oc_data['width'] = 0;
+    		$oc_data['height'] = 0;
+    		$oc_data['length'] = 0;
+    		$oc_data['length_class_id'] = $config->get('config_length_class_id');
+    		$oc_data['weight_class_id'] = $config->get('config_weight_class_id');
+    	}
+    	
+    	if (isset($data['produtoLoja']) && $config->get('bling_api_store_price') == \Bling\Resources\Produto::CUSTOM_PRICE) {
+    		if ($data['produtoLoja']['preco']['preco'] > 0) {
+    			$oc_data['price'] = $data['produtoLoja']['preco']['preco'];
+    		}
+    	
+    		if ($data['produtoLoja']['preco']['precoPromocional'] > 0) {
+    			$oc_data['special'] = $data['produtoLoja']['preco']['precoPromocional'];
+    		}
+    	}
     	
     	/*if (isset($data['storage']) && is_array($data['storage'])) {
     		$oc_data['deposito']['id'] = $data['storage']['bling_id'];
     		$oc_data['deposito']['estoque'] = $data['storage']['quantity'];
     	}*/
     	
-    	$oc_data['width'] = $data['largura'];
-    	$oc_data['height'] = $data['altura'];
-    	$oc_data['length'] = $data['profundidade'];
-    	
-    	$unidadesMedida = \Bling\Core\Util::getUnidadesMedida();
-    	$map_length = $config->get('bling_map_length_id');
-    	foreach ($unidadesMedida as $key => $label) {
-    		if ($label == $data['unidadeMedida']) {
-    			$oc_data['length_class_id'] = $map_length[$key];
-    			break;
-    		}
-    	}
-    	
     	$oc_data['manufacturer'] = $data['marca'];
     	
-    	if (isset($data['variacoes'])) {
+    	if (isset($data['opcionais'])) {
     		$oc_data['options'] = [];
-    		foreach ($data['variacoes'] as $item) {
+    		foreach ($data['opcionais'] as $item) {
     			$oc_data['options'][] = [
     				'sku' => $item['codigo'],
-					'name' => $item['nome'],
-					'value' => $item['valor'],
+					'name' => trim($item['nome']),
+					'value' => trim($item['valor']),
 					'quantity' => $item['estoque'],
 					'price' => $item['preco']
     			];

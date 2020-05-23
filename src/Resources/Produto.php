@@ -15,8 +15,11 @@ class Produto extends Bling {
 	const DEFAULT_PRICE = 'd';
 	const CUSTOM_PRICE = 'c'; // multistore
 	
+	const TIPO_PRODUTO = 'P';
+	const TIPO_SERVICO = 'S';
+	
 	const SITUACAO_ATIVO = 'Ativo';
-	const SITUACAO_INATIVO = 'Intivo';
+	const SITUACAO_INATIVO = 'Inativo';
 	
 	const FILTRO_ATIVO = 'A';
 	const FILTRO_INATIVO = 'I';
@@ -109,7 +112,7 @@ class Produto extends Bling {
         }
     }
     
-    public function getProdutos($situacao = [], $page = 1) {
+    public function getProdutos($loja, $situacao = [], $page = 1) {
     	try {
     		$filters = '';
     		if ($situacao) {
@@ -118,7 +121,7 @@ class Produto extends Bling {
     		
     		$request = $this->configurations['guzzle']->get(
     			'produtos/page=' . (int)$page . '/json/',
-    			['query' => ['filters' => $filters]]
+    			['query' => ['filters' => $filters, 'loja' => $loja, 'estoque' => 'S']]
     		);
     
     		$response = \json_decode($request->getBody()->getContents(), true);
@@ -172,5 +175,16 @@ class Produto extends Bling {
      */
     public static function isAtivo($situacao) {
     	return $situacao == self::SITUACAO_ATIVO;
+    }
+    
+    /**
+     * 
+     * @author Rande A. Moreira
+     * @since 22 de mai de 2020
+     * @param unknown $tipo
+     * @return boolean
+     */
+    public static function isServico($tipo) {
+    	return $tipo == self::TIPO_SERVICO;
     }
 }

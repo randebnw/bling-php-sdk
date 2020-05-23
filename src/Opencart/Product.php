@@ -78,6 +78,7 @@ class Product extends \Bling\Opencart\Base {
 		$sql .= "name = '" . $this->db->escape($data['name']) . "', ";
 		$sql .= "meta_keyword = '', meta_description = '', ";
 		$sql .= "description = '" . $this->db->escape($data['description']) . "', ";
+		$sql .= "mini_description = '" . $this->db->escape($data['mini_description']) . "', ";
 		$sql .= "tag = ''";
 		$this->db->query($sql);
 		
@@ -119,7 +120,7 @@ class Product extends \Bling\Opencart\Base {
 						product_id = '" . (int)$product_id . "',
 						option_sku = '" . $this->db->escape($product_option_value['sku']) . "',
 						option_id = '" . (int)$option_id . "', 
-						option_value_id = '" . (int)$product_option_value['id'] . "', 
+						option_value_id = '" . (int)$product_option_value['option_value_id'] . "', 
 						quantity = " . (int)$product_option_value['quantity'] . ", 
 						subtract = " . (int)$data['subtract'] . ", 
 						price = " . (float)$product_option_value['price'] . ", 
@@ -219,7 +220,7 @@ class Product extends \Bling\Opencart\Base {
 						$map_product_option_id[$option_id] = $item['product_option_id'];
 						foreach ($values as $key => $v) {
 							if ($v['sku'] == $item['option_sku']) {
-								$data['options'][$option_id]['values'][$key]['product_option_value_id'] = $item['product_option_value_id'];
+								$data['options'][$option_id][$key]['product_option_value_id'] = $item['product_option_value_id'];
 							}
 						}
 						
@@ -246,8 +247,6 @@ class Product extends \Bling\Opencart\Base {
 				foreach ($values as $product_option_value) {
 					// se ainda nao existe na loja, inclui
 					// TODO soma automatica de estoque
-					
-					// TODO option_value_id
 					if (!isset($product_option_value['product_option_value_id'])) {
 						$sql = "
 							INSERT INTO " . DB_PREFIX . "product_option_value SET
@@ -255,7 +254,7 @@ class Product extends \Bling\Opencart\Base {
 							product_id = '" . (int)$product_id . "',
 							option_sku = '" . $this->db->escape($product_option_value['sku']) . "',
 							option_id = '" . (int)$option_id . "',
-							option_value_id = '" . (int)$product_option_value['id'] . "',
+							option_value_id = '" . (int)$product_option_value['option_value_id'] . "',
 							quantity = " . (int)$product_option_value['quantity'] . ",
 							subtract = " . (int)$data['subtract'] . ",
 							price = " . (float)$product_option_value['price'] . ", 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Bling\Opencart;
+namespace Bling;
 
 use Bling;
 
@@ -58,9 +58,12 @@ class OpencartClient extends \Bling\Opencart\Base {
 	private $map_manufacturer;
 	private $map_product;
 	private $map_options;
+	private $map_option_id;
 	
 	private $sync_categories;
 	private $sync_brand;
+	
+	private $new_products = 0;
 	
 	private static $instance;
 	
@@ -75,7 +78,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 */
 	public static function get_instance($registry) {
 		if (self::$instance == null) {
-			self::$instance = new \Bling\Opencart\OpencartClient($registry);
+			self::$instance = new \Bling\OpencartClient($registry);
 			self::$instance->model_product = new \Bling\Opencart\Product($registry);
 			self::$instance->model_category = new \Bling\Opencart\Category($registry);
 			self::$instance->model_manufacturer = new \Bling\Opencart\Manufacturer($registry);
@@ -116,6 +119,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 			
 			$options = $this->model_option->get_all();
 			foreach ($options as $option_id => $item) {
+				$this->map_option_id[$item['name']] = $option_id;
 				foreach ($item['values'] as $opt) {
 					// mapa no formato "NomeOpcional/ValorOpcional" => dados do opcional na loja
 					$this->map_options[$item['name']][$opt['name']] = $opt;
@@ -224,8 +228,23 @@ class OpencartClient extends \Bling\Opencart\Base {
 		if (isset($item['options'])) {
 			$oc_options = [];
 			foreach ($item['options'] as $opt) {
-				// TODO cadastrar o opcional se ele nao existir na loja
-				// TODO opcional: verificar primeiro se existe o nome depois o valor
+				// verifica se existe o opcional
+				if (!isset($this->map_option_id[$opt['name']])) {
+					$option_id = $this->model_option->insert($opt['name']);
+					$this->map_option_id[$opt['name']] = $option_id;
+				}
+				
+				// verifica se existe o valor do opcional
+				if (!isset($this->map_options[$opt['name']][$opt['value']])) {
+					$option_id = $this->map_option_id[$opt['name']];
+					$option_value_id = $this->model_option->insert_value($option_id, $opt['value']);
+					$this->map_options[$opt['name']][$opt['value']] = [
+						'name' => trim($opt['value']),
+						'option_value_id' => $option_value_id,
+						'option_id' => $option_id,
+					];
+				}
+				
 				if (isset($this->map_options[$opt['name']][$opt['value']])) {
 					$oc_opt = $this->map_options[$opt['name']][$opt['value']];
 					if (!isset($oc_options[$oc_opt['option_id']])) {
@@ -258,6 +277,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 			// INSERT
 			$product_id = $this->model_product->insert($item);
 			if ($product_id) {
+				$this->new_products++;
 				$this->map_product[$item['sku']] = $product_id;
 			}
 		}
@@ -338,6 +358,15 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 */
 	public function getOrdersToUpdate() {
 		return $this->model_order->getOrdersToUpdate();
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 22 de mai de 2020
+	 */
+	public function getNewProducts() {
+		return $this->new_products;
 	}
 	
 	/**
