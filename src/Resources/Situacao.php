@@ -41,7 +41,7 @@ class Situacao extends Bling {
                 return $list;
             }
         } catch (\Exception $e){
-            return $this->ResponseException($e);
+            $this->ResponseException($e);
         }
         
         if (!$success && isset($response['retorno']['erros'])) {

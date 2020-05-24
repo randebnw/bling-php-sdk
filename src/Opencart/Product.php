@@ -12,6 +12,7 @@ class Product extends \Bling\Opencart\Base {
 	private $sync_categories;
 	private $sync_description;
 	private $sync_brand;
+	private $auto_sum_stock;
 	
 	public function __construct($registry) {
 		parent::__construct($registry);
@@ -23,6 +24,7 @@ class Product extends \Bling\Opencart\Base {
 		$this->sync_price = $registry->get('config')->get('bling_api_sync_price');
 		$this->sync_categories = $registry->get('config')->get('bling_api_sync_categories');
 		$this->sync_brand = $registry->get('config')->get('bling_api_sync_brand');
+		$this->auto_sum_stock = $registry->get('config')->get('bling_api_auto_sum_stock');
 	}
 	
 	public function get_all() {
@@ -44,8 +46,6 @@ class Product extends \Bling\Opencart\Base {
 		$sql .= "isbn = '" . $this->db->escape($data['isbn']) . "', ";
 		$sql .= "mpn = '" . $this->db->escape($data['mpn']) . "', ";
 		$sql .= "location = '" . $this->db->escape($data['location']) . "', ";
-		
-		// TODO soma automatica de estoque
 		$sql .= "quantity = '" . (int)$data['quantity'] . "', ";
 		$sql .= "minimum = '" . (int)$data['minimum'] . "', ";
 		$sql .= "subtract = '" . (int)$data['subtract'] . "', ";
@@ -111,7 +111,6 @@ class Product extends \Bling\Opencart\Base {
 					required = 1
 				");
 				
-				// TODO soma automatica de estoque
 				$product_option_id = $this->db->getLastId();
 				foreach ($values as $product_option_value) {
 					$this->db->query("
@@ -138,6 +137,7 @@ class Product extends \Bling\Opencart\Base {
 			$this->db->query("INSERT INTO " . DB_PREFIX . "url_alias SET query = 'product_id=" . (int)$product_id . "', keyword = '" . $this->db->escape($keyword) . "'");
 		}
 		
+		$this->_autoSumStock($product_id);
 		return $product_id;
 	}
 	
@@ -155,7 +155,6 @@ class Product extends \Bling\Opencart\Base {
 			$sql .= "price = '" . (float)$data['price'] . "', ";
 		}
 		
-		// TODO soma automatica de estoque
 		$sql .= "quantity = '" . (int)$data['quantity'] . "', ";
 		$sql .= "weight = '" . (float)$data['weight'] . "', ";
 		$sql .= "weight_class_id = '" . (int)$data['weight_class_id'] . "', ";
@@ -201,7 +200,7 @@ class Product extends \Bling\Opencart\Base {
 		}
 		
 		// CATEGORIAS
-		if ($this->sync_categories) {
+		if ($this->sync_categories && $data['categories']) {
 			$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_category WHERE product_id = '" . (int)$product_id . "' AND is_bling = 1");
 			foreach ($data['categories'] as $category_id) {
 				$this->db->query("REPLACE INTO " . DB_PREFIX . "product_to_category SET product_id = '" . (int)$product_id . "', category_id = '" . (int)$category_id . "', is_bling = 1");
@@ -251,7 +250,6 @@ class Product extends \Bling\Opencart\Base {
 				
 				foreach ($values as $product_option_value) {
 					// se ainda nao existe na loja, inclui
-					// TODO soma automatica de estoque
 					if (!isset($product_option_value['product_option_value_id'])) {
 						$sql = "
 							INSERT INTO " . DB_PREFIX . "product_option_value SET
@@ -290,37 +288,8 @@ class Product extends \Bling\Opencart\Base {
 					WHERE product_option_id = " . (int)$product_option_id . " AND option_value_id NOT IN (" . implode(",", $options_values_id) . ") ");
 			}
 		}
-	}
-	
-	public function simple_update($product_id, $data) {
-		$sql = "UPDATE " . DB_PREFIX . "product ";
 		
-		// TODO soma automatica de estoque
-		$sql .= "SET quantity = '" . (int)$data['quantity'] . "', ";
-		
-		if ($this->sync_price) {
-			$sql .= "price = '" . (float)$data['price'] . "', ";
-		}
-		
-		$sql .= "`status` = '" . (int)$data['status'] . "', ";
-		$sql .= "api_modified = NOW() ";
-		$sql .= "WHERE product_id = '" . (int)$product_id . "' ";
-		$this->db->query($sql);
-		
-		if ($this->sync_price) {
-			if ($data['special'] > 0) {
-				$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = " . (int)$product_id);
-				
-				$sql = "INSERT INTO " . DB_PREFIX . "product_special ";
-				$sql .= "SET product_id = '" . (int)$product_id . "', ";
-				$sql .= "customer_group_id = '" . (int)$this->customer_group_id . "', ";
-				$sql .= "price = '" . (float)$data['special'] . "', ";
-				$sql .= "priority = '1', date_start = '', date_end = '' ";
-				$this->db->query($sql);
-			}
-		}
-		
-		$this->cache->delete('product');
+		$this->_autoSumStock($product_id);
 	}
 	
 	/**
@@ -338,6 +307,9 @@ class Product extends \Bling\Opencart\Base {
 			// eh produto comum, atualiza o estoque principal
 			$sql = "UPDATE " . DB_PREFIX . "product SET quantity = " . (int) $quantity . ", api_modified = NOW() WHERE product_id = " . (int) $product->row['product_id'];
 			$this->db->query($sql);
+			
+			$this->_autoSumStock($product->row['product_id']);
+			
 			$success = true;
 		} else {
 			// se nao, entao pode ser um opcional
@@ -347,13 +319,31 @@ class Product extends \Bling\Opencart\Base {
 				$sql = "UPDATE " . DB_PREFIX . "product_option_value SET quantity = " . (int) $quantity . " WHERE option_sku = '" . $this->db->escape($sku) . "'";
 				$this->db->query($sql);
 				
-				// TODO soma automatica de estoque
+				$this->_autoSumStock($product->row['product_id']);
 				$success = true;
 			}
 		}
 		
-		$this->cache->delete('product');
 		return $success;
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 24 de mai de 2020
+	 * @param unknown $product_id
+	 */
+	private function _autoSumStock($product_id) {
+		if ($this->auto_sum_stock) {
+			$sql = "SELECT SUM(quantity) AS total FROM " . DB_PREFIX . "product_option_value WHERE product_id = " . (int) $product_id;
+			$result = $this->db->query($sql);
+			
+			// o estoque soh sera atualizado se o produto realmente tiver opcionais do tipo "escolha"
+			if (isset($result->row['total']) && !is_null($result->row['total'])) {
+				$sql = "UPDATE " . DB_PREFIX . "product SET quantity = " . (int)$result->row['total'] . " WHERE product_id = " . (int) $product_id;
+				$this->db->query($sql);
+			}
+		}
 	}
 }
 ?>

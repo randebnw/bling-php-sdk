@@ -11,6 +11,8 @@ use Bling\Core\Bling;
  * são registrados dentra da classe abstrata extendida pelo cliente Blig\Bling
  */
 class BlingClient extends Bling {
+	private $situacoes = [];
+	
   	public function __construct($configurations) {
   		parent::__construct($configurations);
   	}
@@ -46,5 +48,32 @@ class BlingClient extends Bling {
   		
   		$bling_data = \Bling\Opencart\Converter::toBlingCustomer($customer, $address);
   		return $this->createContato($bling_data);
+  	}
+  	
+  	/**
+  	 *
+  	 * @author Rande A. Moreira
+  	 * @since 24 de mai de 2020
+  	 * @param unknown $nome
+  	 * @param unknown $modulo
+  	 */
+  	public function getIdSituacaoPorNome($nome, $modulo = '') {
+  		if (!$modulo) {
+  			$modulo = \Bling\Resources\Situacao::MODULO_VENDAS;
+  		}
+  		
+  		if (!isset($this->situacoes[$modulo])) {
+  			$this->situacoes[$modulo] = $this->getSituacoes($modulo);
+  		}
+  		 
+  		if ($this->situacoes[$modulo]) {
+  			foreach ($this->situacoes[$modulo] as $item) {
+  				if ($item['nome'] == $nome) {
+  					return $item['id'];
+  				}
+  			}
+  		}
+  		 
+  		return '';
   	}
 }
