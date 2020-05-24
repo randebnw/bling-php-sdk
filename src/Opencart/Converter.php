@@ -161,7 +161,7 @@ class Converter {
     	$cliente['cep'] = $address['postcode'];
     	$cliente['cidade'] = $address['city'];
     	$cliente['uf'] = $address['uf'];
-    	$cliente['tipos_contatos'][] = ['tipoContato' => ['descricao' => \Bling\Resources\Contato::CONTATO_CLIENTE]];
+    	$cliente['tipos_contatos'][] = ['tipo_contato' => ['descricao' => \Bling\Resources\Contato::CONTATO_CLIENTE]];
     	
     	return $cliente;
     }
@@ -233,7 +233,7 @@ class Converter {
     		$dados_etiqueta['complemento'] = $data['shipping_complemento'];
     		$dados_etiqueta['bairro'] = $data['shipping_address_2'];
     		$dados_etiqueta['cep'] = $data['shipping_postcode'];
-    		$dados_etiqueta['cidade'] = $data['shipping_city'];
+    		$dados_etiqueta['municipio'] = $data['shipping_city'];
     		$dados_etiqueta['uf'] = $data['shipping_uf'];
     		$transporte['dados_etiqueta'] = $dados_etiqueta;
     		
@@ -261,7 +261,7 @@ class Converter {
     	
     	$bling_data['vlr_frete'] = $shipping_value;
     	$bling_data['vlr_desconto'] = $discount_value;
-    	$bling_data['obs'] = $oc_order['comment'];
+    	$bling_data['obs'] = $data['comment'];
     	$bling_data['obs_internas'] = 'Pedido cadastrado pela loja virtual.';
 		
 		return $bling_data;

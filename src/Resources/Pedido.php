@@ -28,7 +28,7 @@ class Pedido extends Bling {
     	$numero = '';
         try {
         	$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'pedido'], true, 'UTF-8');
-            $request = $this->configurations['guzzle']->post(
+        	$request = $this->configurations['guzzle']->post(
                 'pedido/json/',
                 ['query' => ['xml' => $xml]]
             );

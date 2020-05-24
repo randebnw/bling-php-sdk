@@ -210,7 +210,12 @@ class Product extends \Bling\Opencart\Base {
 		
 		// OPCIONAIS
 		if (isset($data['options']) && $data['options']) {
-			$product_options = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_option_value WHERE product_id = " . $product_id);
+			$product_options = $this->db->query("
+				SELECT ov.product_option_value_id, ov.option_sku, o.option_id, o.product_option_id 
+				FROM " . DB_PREFIX . "product_option o 
+				LEFT JOIN " . DB_PREFIX . "product_option_value ov ON ov.product_option_id = o.product_option_id
+				WHERE o.product_id = " . $product_id
+			);
 			$existing_options = [];
 			$map_product_option_id = [];
 			$options_values_id = [];
@@ -280,7 +285,9 @@ class Product extends \Bling\Opencart\Base {
 				}
 				
 				// exclui opcoes que nao existem mais
-				$this->db->query("DELETE FROM " . DB_PREFIX . "product_option_value WHERE option_value_id NOT IN (" . implode(",", $options_values_id) . ") ");
+				$this->db->query("
+					DELETE FROM " . DB_PREFIX . "product_option_value 
+					WHERE product_option_id = " . (int)$product_option_id . " AND option_value_id NOT IN (" . implode(",", $options_values_id) . ") ");
 			}
 		}
 	}

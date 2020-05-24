@@ -23,12 +23,11 @@ class BlingClient extends Bling {
   	 * @param unknown $customer_info
   	 * @param unknown $products
   	 * @param unknown $order_totals
-  	 * @param unknown $map_zones
   	 * @param unknown $config
   	 */
-  	public function addOrder($data, $customer_info, $products, $order_totals, $map_zones, $config) {
-  		$bling_data = \Bling\Opencart\Converter::toBlingOrder($data, $customer_info, $products, $order_totals, $map_zones, $config);
-  		return $this->createPedido($data);
+  	public function addOrder($data, $customer_info, $products, $order_totals, $config) {
+  		$bling_data = \Bling\Opencart\Converter::toBlingOrder($data, $customer_info, $products, $order_totals, $config);
+  		return $this->createPedido($bling_data);
   	}
   	
   	/**
@@ -46,6 +45,6 @@ class BlingClient extends Bling {
   		}
   		
   		$bling_data = \Bling\Opencart\Converter::toBlingCustomer($customer, $address);
-  		return $this->createContato();
+  		return $this->createContato($bling_data);
   	}
 }

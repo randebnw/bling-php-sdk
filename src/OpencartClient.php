@@ -318,9 +318,11 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 * 
 	 * @author Rande A. Moreira
 	 * @since 15 de abr de 2020
+	 * @param unknown $lib_correios
+	 * @param unknown $lib_language
 	 */
-	public function getOrdersToExport() {
-		return $this->model_order->getOrdersToExport();
+	public function getOrdersToExport($lib_correios, $lib_language) {
+		return $this->model_order->getOrdersToExport($lib_correios, $lib_language);
 	}
 	
 	/**
@@ -337,8 +339,9 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 * 
 	 * @author Rande A. Moreira
 	 * @since 15 de abr de 2020
+	 * @param int $order_id
 	 */
-	public function getOrderTotals() {
+	public function getOrderTotals($order_id) {
 		return $this->model_order->getOrderTotals($order_id);
 	}
 	
@@ -346,8 +349,9 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 * 
 	 * @author Rande A. Moreira
 	 * @since 15 de abr de 2020
+	 * @param int $order_id
 	 */
-	public function getOrderProducts() {
+	public function getOrderProducts($order_id) {
 		return $this->model_order->getOrderProducts($order_id);
 	}
 	

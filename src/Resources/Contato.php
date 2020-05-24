@@ -43,8 +43,8 @@ class Contato extends Bling {
                 ['query' => ['xml' => $xml]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
-            if ($response && is_array($response) && isset($response['retorno']['contatos'][0][0]['contato']['id'])) {
-                $id = $response['retorno']['contatos'][0][0]['contato']['id'];
+            if ($response && is_array($response) && isset($response['retorno']['contatos']['contato']['id'])) {
+                $id = $response['retorno']['contatos']['contato']['id'];
             }
         } catch (\Exception $e){
         	$this->ResponseException($e);
