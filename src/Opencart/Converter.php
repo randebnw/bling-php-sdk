@@ -227,7 +227,7 @@ class Converter {
     			$transporte['servico_correios'] = $data['servico_correios'];
     		}
     		
-    		$dados_etiqueta['nome'] = $data['shipping_firstname'] . ' ' . $data['shipping_firstname'];
+    		$dados_etiqueta['nome'] = $data['shipping_firstname'] . ' ' . $data['shipping_lastname'];
     		$dados_etiqueta['endereco'] = $data['shipping_address_1'];
     		$dados_etiqueta['numero'] = $data['shipping_numero'];
     		$dados_etiqueta['complemento'] = $data['shipping_complemento'];

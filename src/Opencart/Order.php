@@ -73,7 +73,8 @@ class Order extends \Bling\Opencart\Base {
 				'o.payment_complemento', 'o.payment_city', 'o.payment_postcode', 'o.payment_code',
 				'o.shipping_firstname', 'o.shipping_lastname',
 				'o.shipping_address_1', 'o.shipping_numero', 'o.shipping_address_2',
-				'o.shipping_complemento', 'o.shipping_city', 'o.shipping_postcode', 'o.shipping_code',
+				'o.shipping_complemento', 'o.shipping_city', 'o.shipping_postcode', 
+				'o.shipping_code', 'o.shipping_method',
 				'REPLACE(o.shipping_code, \'correios.\', \'\') AS servico_correios'
 			];
 	
@@ -93,6 +94,7 @@ class Order extends \Bling\Opencart\Base {
 				}
 				
 				$result->rows[$key]['shipping_company_name'] = $shipping_language[$shipping_code]['text_title'];
+				$result->rows[$key]['shipping_company_name'] .= ' - ' . $row['shipping_method'];
 				$result->rows[$key]['is_tracking'] = $bnw_correios->is_tracking($row['servico_correios'], $row['shipping_code']);
 				if ($result->rows[$key]['is_tracking']) {
 					// o is_tracking vai ter o servico_correios atualizado caso exista algum mapeamento para outra forma de entrega
@@ -112,6 +114,7 @@ class Order extends \Bling\Opencart\Base {
 	 */
 	public function getOrderByBlingId($bling_id) {
 		$sql = "SELECT o.order_id, o.order_status_id, ";
+		$sql .= "o.shipping_code, REPLACE(o.shipping_code, 'correios.', '') AS servico_correios, ";
 		$sql .= "(SELECT GROUP_CONCAT(sg.object SEPARATOR ',') FROM " . DB_PREFIX . "bnw_correios sg WHERE sg.order_id = o.order_id GROUP BY sg.order_id) AS objects ";
 		$sql .= "FROM `" . DB_PREFIX . "order` o ";
 		$sql .= "WHERE o.bling_id = " . (int) $bling_id;
