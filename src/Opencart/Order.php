@@ -65,7 +65,7 @@ class Order extends \Bling\Opencart\Base {
 			$shipping_uf = sprintf($query_uf, 'o.shipping_zone_id');
 			
 			$fields = [
-				'o.order_id', 'o.date_added', 'o.store_name', 'o.store_id', 'o.comment', 
+				'o.order_id', 'o.date_added', 'o.date_modified', 'o.store_name', 'o.store_id', 'o.comment', 
 				'o.language_id', 'o.customer_id', 'o.customer_group_id',
 				'o.order_status_id', 'o.firstname', 'o.lastname', 'o.email', 'o.telephone', 'o.fax',
 				'o.cpf', 'o.cnpj', 'o.razao_social', 'o.inscricao_estadual',
@@ -113,9 +113,10 @@ class Order extends \Bling\Opencart\Base {
 	 * @since 5 de mai de 2020
 	 */
 	public function getOrderByBlingId($bling_id) {
-		$sql = "SELECT o.order_id, o.order_status_id, ";
+		$sql = "SELECT o.order_id, o.order_status_id, o.language_id, o.customer_id, ";
 		$sql .= "o.shipping_code, REPLACE(o.shipping_code, 'correios.', '') AS servico_correios, ";
-		$sql .= "(SELECT GROUP_CONCAT(sg.object SEPARATOR ',') FROM " . DB_PREFIX . "bnw_correios sg WHERE sg.order_id = o.order_id GROUP BY sg.order_id) AS objects ";
+		$sql .= "(SELECT GROUP_CONCAT(sg.object SEPARATOR ',') FROM " . DB_PREFIX . "bnw_correios sg WHERE sg.order_id = o.order_id GROUP BY sg.order_id) AS objects, ";
+		$sql .= "(SELECT SUM(op.reward) FROM " . DB_PREFIX . "order_product op WHERE op.order_id = o.order_id) AS reward ";
 		$sql .= "FROM `" . DB_PREFIX . "order` o ";
 		$sql .= "WHERE o.bling_id = " . (int) $bling_id;
 		$result = $this->db->query($sql);

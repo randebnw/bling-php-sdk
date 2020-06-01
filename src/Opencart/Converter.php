@@ -132,7 +132,7 @@ class Converter {
     public static function toBlingCustomer($data, $address) {
     	$cliente = [];
     	if ($data['cpf']) {
-    		$cliente['nome'] = $data['firstname'] . ' ' . $data['lastname'];
+    		$cliente['nome'] = trim($data['firstname']) . ' ' . trim($data['lastname']);
     		$cliente['tipoPessoa'] = \Bling\Resources\Contato::PESSOA_FISICA;
     		$cliente['cpf_cnpj'] = $data['cpf'];
     		$cliente['ie_rg'] = $data['rg'];
@@ -178,13 +178,14 @@ class Converter {
      */
     public static function toBlingOrder(array $data, $customer_info, $products, $order_totals, $config) {
     	$bling_data = array();
-    	$bling_data['data'] = date('d/m/Y', strtotime($data['date_added']));
+    	// TODO parametrizar qual data sera usada no Bling added/modified
+    	$bling_data['data'] = date('d/m/Y', strtotime($data['date_modified']));
     	$bling_data['numero_loja'] = $data['order_id'];
     	$bling_data['loja'] = $config->get('bling_api_store_code');
     	
     	$cliente['id'] = $customer_info['bling_id'];
     	if ($data['cpf']) {
-    		$cliente['nome'] = $customer_info['firstname'] . ' ' . $customer_info['lastname'];
+    		$cliente['nome'] = trim($customer_info['firstname']) . ' ' . trim($customer_info['lastname']);
     		$cliente['tipoPessoa'] = \Bling\Resources\Contato::PESSOA_FISICA;
     		$cliente['cpf_cnpj'] = $data['cpf'];
     	} else {
@@ -217,7 +218,7 @@ class Converter {
     		}
     		
     		if ($item['value'] < 0) {
-    			$discount_value += abs($total['value']);
+    			$discount_value += abs($item['value']);
     		}
     	}
     	
@@ -227,7 +228,7 @@ class Converter {
     			$transporte['servico_correios'] = $data['servico_correios'];
     		}
     		
-    		$dados_etiqueta['nome'] = $data['shipping_firstname'] . ' ' . $data['shipping_lastname'];
+    		$dados_etiqueta['nome'] = trim($data['shipping_firstname']) . ' ' . trim($data['shipping_lastname']);
     		$dados_etiqueta['endereco'] = $data['shipping_address_1'];
     		$dados_etiqueta['numero'] = $data['shipping_numero'];
     		$dados_etiqueta['complemento'] = $data['shipping_complemento'];
@@ -255,14 +256,14 @@ class Converter {
     	
     	$map_payment = $config->get('bling_api_map_payment');
     	if (isset($map_payment[$data['payment_code']])) {
-    		$bling_data['idFormaPagamento'] = $map_payment[$data['payment_code']];
+    		// TODO teste para ver como fica sem informar a forma de pagamento $bling_data['idFormaPagamento'] = $map_payment[$data['payment_code']];
     		// TODO parcelas
     	}
     	
-    	$bling_data['vlr_frete'] = $shipping_value;
-    	$bling_data['vlr_desconto'] = $discount_value;
+    	$bling_data['vlr_frete'] = round($shipping_value, 2);
+    	$bling_data['vlr_desconto'] = round($discount_value, 2);
     	$bling_data['obs'] = $data['comment'];
-    	$bling_data['obs_internas'] = 'Pedido cadastrado pela loja virtual.';
+    	$bling_data['obs_internas'] = 'Pedido cadastrado pela loja virtual: ' . $data['store_name'];
 		
 		return $bling_data;
     }
