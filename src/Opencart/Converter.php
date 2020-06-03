@@ -179,7 +179,8 @@ class Converter {
     public static function toBlingOrder(array $data, $customer_info, $products, $order_totals, $config) {
     	$bling_data = array();
     	// TODO parametrizar qual data sera usada no Bling added/modified
-    	$bling_data['data'] = date('d/m/Y', strtotime($data['date_modified']));
+    	$date_field = $config->get('bling_api_order_date');
+    	$bling_data['data'] = date('d/m/Y', strtotime($data[$date_field]));
     	$bling_data['numero_loja'] = $data['order_id'];
     	$bling_data['loja'] = $config->get('bling_api_store_code');
     	
@@ -255,13 +256,19 @@ class Converter {
     	}
     	
     	$map_payment = $config->get('bling_api_map_payment');
-    	if (isset($map_payment[$data['payment_code']])) {
-    		// TODO teste para ver como fica sem informar a forma de pagamento $bling_data['idFormaPagamento'] = $map_payment[$data['payment_code']];
+    	if (isset($map_payment[$data['payment_code']]) && !empty($map_payment[$data['payment_code']]) && $config->get('bling_api_sync_payment_info')) {
+    		$bling_data['idFormaPagamento'] = $map_payment[$data['payment_code']];
     		// TODO parcelas
     	}
     	
-    	$bling_data['vlr_frete'] = round($shipping_value, 2);
-    	$bling_data['vlr_desconto'] = round($discount_value, 2);
+    	if ($config->get('bling_api_sync_shipping')) {
+    		$bling_data['vlr_frete'] = round($shipping_value, 2);
+    	}
+    	
+    	if ($config->get('bling_api_sync_discount')) {
+    		$bling_data['vlr_desconto'] = round($discount_value, 2);
+    	}
+    	
     	$bling_data['obs'] = $data['comment'];
     	$bling_data['obs_internas'] = 'Pedido cadastrado pela loja virtual: ' . $data['store_name'];
 		
