@@ -89,12 +89,18 @@ class Order extends \Bling\Opencart\Base {
 			foreach ($result->rows as $key => $row) {
 				$shipping_code = explode('.', $row['shipping_code']);
 				$shipping_code = array_shift($shipping_code);
-				if (!isset($shipping_language[$shipping_code])) {
-					$shipping_language[$shipping_code] = $language->load('shipping/' . $shipping_code);
+				
+				$shipping_company_name = '';
+				if ($shipping_code) {
+					if (!isset($shipping_language[$shipping_code])) {
+						$shipping_language[$shipping_code] = $language->load('shipping/' . $shipping_code);
+					}
+					
+					$shipping_company_name = $shipping_language[$shipping_code]['text_title'];
+					$shipping_company_name .= ' - ' . $row['shipping_method'];
 				}
 				
-				$result->rows[$key]['shipping_company_name'] = $shipping_language[$shipping_code]['text_title'];
-				$result->rows[$key]['shipping_company_name'] .= ' - ' . $row['shipping_method'];
+				$result->rows[$key]['shipping_company_name'] = $shipping_company_name;
 				$result->rows[$key]['is_tracking'] = $bnw_correios->is_tracking($row['servico_correios'], $row['shipping_code']);
 				if ($result->rows[$key]['is_tracking']) {
 					// o is_tracking vai ter o servico_correios atualizado caso exista algum mapeamento para outra forma de entrega
