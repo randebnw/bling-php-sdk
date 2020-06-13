@@ -21,6 +21,9 @@ class Produto extends Bling {
 	const SITUACAO_ATIVO = 'Ativo';
 	const SITUACAO_INATIVO = 'Inativo';
 	
+	const TIPO_DATA_INCLUSAO = 'dataInclusao';
+	const TIPO_DATA_ALTERACAO = 'dataAlteracao';
+	
 	const FILTRO_ATIVO = 'A';
 	const FILTRO_INATIVO = 'I';
 	const FILTRO_EXCLUIDO = 'E';
@@ -142,15 +145,100 @@ class Produto extends Bling {
     /**
      * 
      * @author Rande A. Moreira
-     * @since 20 de mai de 2020
-     * @param unknown $dataAlteracao
+     * @since 13 de jun de 2020
+     * @param unknown $loja
+     * @param unknown $codigo
+     * @param unknown $data
+     * @return mixed[]|boolean
+     */
+    public function inserirProdutoLoja($loja, $codigo, $data) {
+    	$success = false;
+    	try {
+    		$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produtosLoja'], true, 'UTF-8');
+            $request = $this->configurations['guzzle']->post(
+                'produtoLoja/' . $loja . '/' . $codigo . '/json/',
+                ['query' => ['xml' => $xml]]
+            );
+    
+    		$response = \json_decode($request->getBody()->getContents(), true);
+            if ($response && is_array($response) && isset($response['retorno']['produtosLoja'][0][0]['produtosLoja']['idLojaVirtual'])) {
+                $success = true;
+            }
+    	} catch (\Exception $e){
+    		$this->ResponseException($e);
+    	}
+    	
+    	if (!$success && isset($response['retorno']['erros'])) {
+    		$error = $this->_getError($response);
+    		throw new \Exception($error['message'], $error['code']);
+    	}
+    }
+    
+    /**
+     * 
+     * @author Rande A. Moreira
+     * @since 13 de jun de 2020
+     * @param unknown $loja
+     * @param unknown $codigo
+     * @param unknown $data
+     * @throws \Exception
+     */
+    public function atualizarProdutoLoja($loja, $codigo, $data) {
+    	$success = false;
+    	try {
+    		$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produtosLoja'], true, 'UTF-8');
+            $request = $this->configurations['guzzle']->put(
+                'produtoLoja/' . $loja . '/' . $codigo . '/json/',
+                ['query' => ['xml' => $xml]]
+            );
+    
+    		$response = \json_decode($request->getBody()->getContents(), true);
+            if ($response && is_array($response) && isset($response['retorno']['produtosLoja'][0][0]['produtosLoja']['idLojaVirtual'])) {
+                $success = true;
+            }
+    	} catch (\Exception $e){
+    		$this->ResponseException($e);
+    	}
+    	
+    	if (!$success && isset($response['retorno']['erros'])) {
+    		$error = $this->_getError($response);
+    		throw new \Exception($error['message'], $error['code']);
+    	}
+    }
+    
+    /**
+     * 
+     * @author Rande A. Moreira
+     * @since 13 de jun de 2020
+     * @param unknown $dataInicio
+     * @param unknown $dataFim
+     * @param number $page
      * @return mixed|boolean
      */
-	public function getProdutosPorData($dataAlteracao, $page = 1) {
+    public function getProdutosPorDataInclusao($loja, $dataInicio, $dataFim, $page = 1) {
+    	return $this->_getProdutosPorData($loja, $dataInicio, $dataFim, self::TIPO_DATA_INCLUSAO, $page);
+    }
+    
+    public function getProdutosPorDataAlteracao($loja, $dataInicio, $dataFim, $page = 1) {
+    	return $this->_getProdutosPorData($loja, $dataInicio, $dataFim, self::TIPO_DATA_ALTERACAO, $page);
+    }
+    
+    /**
+     * 
+     * @author Rande A. Moreira
+     * @since 13 de jun de 2020
+     * @param unknown $loja
+     * @param unknown $dataInicio
+     * @param unknown $dataFim
+     * @param unknown $tipoData
+     * @param number $page
+     * @return mixed[]|boolean
+     */
+	private function _getProdutosPorData($loja, $dataInicio, $dataFim, $tipoData, $page = 1) {
         try {
         	$request = $this->configurations['guzzle']->get(
                 'produtos/page=' . (int)$page . '/json/',
-            	['query' => ['filters' => 'dataAlteracao[' . $dataAlteracao . ' TO ' . date('d/m/Y H:i:s') . ']']]
+            	['query' => ['loja' => $loja, 'estoque' => 'S', 'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_ATIVO . ']']]
             );
             
             $response = \json_decode($request->getBody()->getContents(), true);
