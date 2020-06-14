@@ -208,7 +208,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 		
 		if ($this->sync_brand) {
 			// importa fabricante se ainda nao existir
-			if (isset($item['manufacturer']['id']) && !isset($this->map_manufacturer[$item['manufacturer']['id']])) {
+			if (isset($item['manufacturer']) && !isset($this->map_manufacturer[$item['manufacturer']])) {
 				if ($manufacturer_id = $this->model_manufacturer->insert($item['manufacturer'])) {
 					$this->map_manufacturer[$item['manufacturer']['id']] = $manufacturer_id;
 				} else {

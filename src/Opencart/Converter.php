@@ -21,28 +21,37 @@ class Converter {
 	 * @param array $config
      * @param array $weight_lib
 	 */
-    public static function toBlingProduct(array $data, $config, $weight_lib) {
+    public static function toBlingProduct(array $data, $config, $weight_lib, $is_new) {
+    	$storage_id = $config->get('bling_api_storage');
+    	$sync_name = $config->get('bling_api_sync_name');
+    	$sync_description = $config->get('bling_api_sync_description');
+    	$sync_price = $config->get('bling_api_sync_price') && $config->get('bling_api_store_price') == \Bling\Resources\Produto::DEFAULT_PRICE;
+    	$sync_brand = $config->get('bling_api_sync_brand');
+    	
         $bling_data = [];
         $bling_data['codigo'] = $data['sku'];
         
-        if (isset($data['name'])) {
+        if (isset($data['name']) && ($sync_name || $is_new)) {
         	$bling_data['descricao'] = $data['name'];
         }
         
-        if (isset($data['situacao'])) {
-        	$bling_data['situacao'] = $data['status'] ? \Bling\Core\Util::PRODUTO_STATUS_ATIVO : \Bling\Core\Util::PRODUTO_STATUS_INATIVO;
+        if (isset($data['status'])) {
+        	$bling_data['situacao'] = $data['status'] ? \Bling\Resources\Produto::SITUACAO_ATIVO : \Bling\Resources\Produto::SITUACAO_INATIVO;
         }
         
-        if (isset($data['price'])) {
+        if (isset($data['price']) && ($sync_price || $is_new)) {
         	$bling_data['vlr_unit'] = $data['price'];
         }
         
-        if (isset($data['description']) && !empty($data['description'])) {
-        	$bling_data['descricaoComplementar'] = $data['description'];
+        if (isset($data['description']) && !empty($data['description']) && ($sync_description || $is_new)) {
+        	$bling_data['descricaoComplementar'] = html_entity_decode($data['description'], ENT_QUOTES, 'UTF-8');
+        	if (strlen($bling_data['descricaoComplementar']) > 5000) {
+        		$bling_data['descricaoComplementar'] = substr(strip_tags($bling_data['descricaoComplementar']), 0, 5000);
+        	}
         }
         
-        if (isset($data['mini_description'])) {
-        	$bling_data['descricaoCurta'] = $data['mini_description'];
+        if (isset($data['mini_description']) && ($sync_description || $is_new)) {
+        	$bling_data['descricaoCurta'] = html_entity_decode($data['mini_description'], ENT_QUOTES, 'UTF-8');
         }
         
         if (isset($data['quantity'])) {
@@ -72,7 +81,7 @@ class Converter {
         
         $unidadesMedida = \Bling\Core\Util::getUnidadesMedida();
         if (isset($data['length_class_id'])) {
-        	$map_length = $config->get('bling_map_length_id');
+        	$map_length = $config->get('bling_api_map_length_id');
         	foreach ($map_length as $bling_key => $length_class_id) {
         		if ($length_class_id == $data['length_class_id']) {
         			$bling_data['unidadeMedida'] = $unidadesMedida[$bling_key];
@@ -86,7 +95,7 @@ class Converter {
         	$bling_data['peso_liq'] = $weight_lib->convertToKg($data['weight'], $data['weight_class_id']);
         }
         
-        if (isset($data['manufacturer'])) {
+        if (isset($data['manufacturer']) && ($sync_brand || $is_new)) {
         	$bling_data['marca'] = $data['manufacturer'];
         }
         
@@ -105,16 +114,26 @@ class Converter {
         	}
         }
         
-        if (isset($data['options'])) {
-        	$bling_data['variacoes'] = [];
+        if (isset($data['options']) && count($data['options']) > 0) {
+        	$bling_data['variacoes']['variacao'] = [];
         	foreach ($data['options'] as $option) {
-        		$bling_data['variacoes'][] = [
-        			'variacao' => [
-        				'nome' => $option['option_name'] . ':' . $option['option_value'],
-        				'codigo' => $option['option_sku'],
-        				'clonarDadosPai' => 'S'
-        			]
+        		$variacao = [
+        			'nome' => $option['option_name'] . ':' . $option['option_value'],
+        			'codigo' => $option['option_sku'],
+        			'clonarDadosPai' => $option['use_parent_info'] ? 'S' : 'N'
         		];
+        		if ($storage_id) {
+        			$variacao['deposito']['id'] = $storage_id;
+        			$variacao['deposito']['estoque'] = $option['quantity'];
+        		} else {
+        			$variacao['estoque'] = $option['quantity'];
+        		}
+        		
+        		if (isset($option['price'])) {
+        			$variacao['vlr_unit'] = $option['price'];
+        		}
+        		
+        		$bling_data['variacoes']['variacao'][] = $variacao;
         	}
         }
         
@@ -178,7 +197,6 @@ class Converter {
      */
     public static function toBlingOrder(array $data, $customer_info, $products, $order_totals, $config) {
     	$bling_data = array();
-    	// TODO parametrizar qual data sera usada no Bling added/modified
     	$date_field = $config->get('bling_api_order_date');
     	$bling_data['data'] = date('d/m/Y', strtotime($data[$date_field]));
     	$bling_data['numero_loja'] = $data['order_id'];
@@ -343,7 +361,7 @@ class Converter {
     		$oc_data['deposito']['estoque'] = $data['storage']['quantity'];
     	}*/
     	
-    	$oc_data['manufacturer'] = $data['marca'];
+    	$oc_data['manufacturer'] = trim($data['marca']);
     	
     	if (isset($data['opcionais'])) {
     		$oc_data['options'] = [];

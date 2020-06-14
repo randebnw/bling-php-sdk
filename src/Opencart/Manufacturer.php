@@ -4,14 +4,14 @@ namespace Bling\Opencart;
 
 class Manufacturer extends \Bling\Opencart\Base {
 	public function get_all() {
-		$sql = "SELECT manufacturer_id, bling_id FROM `" . DB_PREFIX . "manufacturer` ";
+		$sql = "SELECT manufacturer_id, `name` FROM `" . DB_PREFIX . "manufacturer` ";
 		$result = $this->db->query($sql);
 		
 		return $result->rows;
 	}
 	
 	public function insert($manufacturer) {
-		$sql = "INSERT INTO " . DB_PREFIX . "manufacturer SET name = '" . $this->db->escape($manufacturer['name']) . "', bling_id = '" . $this->db->escape($manufacturer['id']) . "', sort_order = '0'";
+		$sql = "INSERT INTO " . DB_PREFIX . "manufacturer SET name = '" . $this->db->escape($manufacturer) . "', sort_order = '0'";
 		$this->db->query($sql);
 	
 		$manufacturer_id = $this->db->getLastId();

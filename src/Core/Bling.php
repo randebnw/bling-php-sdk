@@ -193,7 +193,6 @@ abstract class Bling
     	if (isset($response['retorno']['erros'])) {
     		$error_copy = $response['retorno']['erros'];
     		$first = array_shift($response['retorno']['erros']);
-    		pr($first);
     		
     		if (isset($first['erro']['cod'], $first['erro']['msg'])) {
     			// trata um dos formatos de retorno de erro

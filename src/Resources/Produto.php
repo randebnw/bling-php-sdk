@@ -74,9 +74,9 @@ class Produto extends Bling {
     	try {
     		$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produto'], true, 'UTF-8');
     		$request = $this->configurations['guzzle']->post(
-    				'produto/'. $codigo .'/json/',
-    				['query' => ['xml' => $xml]]
-    				);
+    			'produto/'. $codigo .'/json/',
+    			['query' => ['xml' => $xml]]
+    		);
     		$response = \json_decode($request->getBody()->getContents(), true);
     		if ($response && is_array($response) && isset($response['retorno']['produtos'][0][0]['produto']['codigo'])) {
     			$success = true;
