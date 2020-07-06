@@ -165,7 +165,7 @@ class Converter {
     		$cliente['nome'] = $data['razao_social'];
     		$cliente['tipoPessoa'] = \Bling\Resources\Contato::PESSOA_JURIDICA;
     		$cliente['cpf_cnpj'] = $data['cnpj'];
-    		$cliente['ie_rg'] = $data['inscricao_estadual'] ? $data['inscricao_estadual'] : \Bling\Resources\Contato::IE_ISENTO;
+    		$cliente['ie_rg'] = $data['inscricao_estadual'] ? strtoupper($data['inscricao_estadual']) : \Bling\Resources\Contato::IE_ISENTO;
     		$cliente['contribuinte'] = $data['inscricao_estadual'] ? \Bling\Resources\Contato::CONTRIBUINTE : \Bling\Resources\Contato::CONTRIBUINTE_ISENTO;
     	}
     	 
