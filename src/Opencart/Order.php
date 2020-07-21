@@ -60,7 +60,7 @@ class Order extends \Bling\Opencart\Base {
 	 */
 	public function getOrdersToExport($bnw_correios, $language) {
 		if ($this->config->get('bling_api_order_status_export')) {
-			$sql = $this->_getBasicSql(true);
+			$sql = $this->_getBasicSql();
 			$sql .= "WHERE o.order_status_id IN (" . implode(",", $this->config->get('bling_api_order_status_export')) . ") ";
 			$sql .= "AND (o.bling_id IS NULL OR o.bling_id = '') ";
 			$result = $this->db->query($sql);
@@ -98,7 +98,7 @@ class Order extends \Bling\Opencart\Base {
 				// verifica se ja foi enviada atualizacao pro Bling
 				$sql .= "AND (o.bling_status_id IS NULL OR o.order_status_id != o.bling_status_id) ";
 				$result = $this->db->query($sql);
-				return $this->rows;
+				return $result->rows;
 			}
 		}
 	
@@ -132,7 +132,7 @@ class Order extends \Bling\Opencart\Base {
 		$sql = "SELECT " . implode(', ', $fields) . ", ";
 		$sql .= "(" . $payment_uf . ") AS payment_uf, ";
 		$sql .= "(" . $shipping_uf . ") AS shipping_uf, ";
-		$sql .= ", (SELECT GROUP_CONCAT(sg.object SEPARATOR ',') FROM " . DB_PREFIX . "bnw_correios sg WHERE sg.order_id = o.order_id GROUP BY sg.order_id) AS objects ";
+		$sql .= "(SELECT GROUP_CONCAT(sg.object SEPARATOR ',') FROM " . DB_PREFIX . "bnw_correios sg WHERE sg.order_id = o.order_id GROUP BY sg.order_id) AS objects ";
 		
 		$sql .= "FROM `" . DB_PREFIX . "order` o ";
 		return $sql;
@@ -145,14 +145,8 @@ class Order extends \Bling\Opencart\Base {
 	 * @param unknown $rows
 	 * @param unknown $bnw_correios
 	 * @param unknown $language
-	 * @param unknown $ignore_shipping
 	 */
 	private function _parseOrders($rows, $bnw_correios, $language) {
-		// se nao tem q considerar frete, nao ha nada a ser feito
-		if ($ignore_shipping) {
-			return $rows;
-		}
-		
 		$shipping_language = [];
 		foreach ($rows as $key => $row) {
 			

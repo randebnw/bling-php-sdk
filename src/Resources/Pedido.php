@@ -63,7 +63,7 @@ class Pedido extends Bling {
     		
     		$request = $this->configurations['guzzle']->put(
     			'pedido/'. $numero .'/json/',
-    			['query' => ['xml' => $data]]
+    			['query' => ['xml' => $xml]]
     		);
     		$response = \json_decode($request->getBody()->getContents(), true);
     		if ($response && is_array($response) && isset($response['retorno']['pedidos'][0]['pedido']['numero'])) {
