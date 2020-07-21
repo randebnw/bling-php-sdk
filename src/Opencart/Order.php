@@ -53,64 +53,136 @@ class Order extends \Bling\Opencart\Base {
 	}
 	
 	/**
-	 * Recupera pedidos que serao exportados para a TagPlus
+	 * Recupera pedidos que serao exportados para o Bling
 	 * 
 	 * @author Rande A. Moreira
 	 * @since 15 de abr de 2020
 	 */
 	public function getOrdersToExport($bnw_correios, $language) {
 		if ($this->config->get('bling_api_order_status_export')) {
-			$query_uf = "SELECT `code` FROM " . DB_PREFIX . "zone z WHERE z.zone_id = %s";
-			$payment_uf = sprintf($query_uf, 'o.payment_zone_id');
-			$shipping_uf = sprintf($query_uf, 'o.shipping_zone_id');
-			
-			$fields = [
-				'o.order_id', 'o.date_added', 'o.date_modified', 'o.store_name', 'o.store_id', 'o.comment', 
-				'o.language_id', 'o.customer_id', 'o.customer_group_id',
-				'o.order_status_id', 'o.firstname', 'o.lastname', 'o.email', 'o.telephone', 'o.fax',
-				'o.cpf', 'o.cnpj', 'o.razao_social', 'o.inscricao_estadual',
-				'o.payment_address_1', 'o.payment_numero', 'o.payment_address_2',
-				'o.payment_complemento', 'o.payment_city', 'o.payment_postcode', 'o.payment_code',
-				'o.shipping_firstname', 'o.shipping_lastname',
-				'o.shipping_address_1', 'o.shipping_numero', 'o.shipping_address_2',
-				'o.shipping_complemento', 'o.shipping_city', 'o.shipping_postcode', 
-				'o.shipping_code', 'o.shipping_method',
-				'REPLACE(o.shipping_code, \'correios.\', \'\') AS servico_correios'
-			];
-	
-			$sql = "SELECT " . implode(', ', $fields) . ", ";
-			$sql .= "(" . $payment_uf . ") AS payment_uf, ";
-			$sql .= "(" . $shipping_uf . ") AS shipping_uf ";
-			$sql .= "FROM `" . DB_PREFIX . "order` o ";
+			$sql = $this->_getBasicSql(true);
 			$sql .= "WHERE o.order_status_id IN (" . implode(",", $this->config->get('bling_api_order_status_export')) . ") ";
 			$sql .= "AND (o.bling_id IS NULL OR o.bling_id = '') ";
 			$result = $this->db->query($sql);
-			$shipping_language = [];
-			foreach ($result->rows as $key => $row) {
-				$shipping_code = explode('.', $row['shipping_code']);
-				$shipping_code = array_shift($shipping_code);
-				
-				$shipping_company_name = '';
-				if ($shipping_code) {
-					if (!isset($shipping_language[$shipping_code])) {
-						$shipping_language[$shipping_code] = $language->load('shipping/' . $shipping_code);
-					}
-					
-					$shipping_company_name = $shipping_language[$shipping_code]['text_title'];
-					$shipping_company_name .= ' - ' . $row['shipping_method'];
-				}
-				
-				$result->rows[$key]['shipping_company_name'] = $shipping_company_name;
-				$result->rows[$key]['is_tracking'] = $bnw_correios->is_tracking($row['servico_correios'], $row['shipping_code']);
-				if ($result->rows[$key]['is_tracking']) {
-					// o is_tracking vai ter o servico_correios atualizado caso exista algum mapeamento para outra forma de entrega
-					$result->rows[$key]['servico_correios'] = $result->rows[$key]['is_tracking'];
-				}
-			}
-			return $result->rows;
+			
+			return $this->_parseOrders($result->rows, $bnw_correios, $language);
 		}
 		
 		return [];
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 21 de jul de 2020
+	 * @param unknown $bnw_correios
+	 * @param unknown $language
+	 */
+	public function getOrdersToSync() {
+		if ($this->config->get('bling_api_order_status_sync_to_bling')) {
+			$order_statuses = [];
+			foreach ($this->config->get('bling_api_order_status_sync_to_bling') as $order_status_id => $bling_status_id) {
+				if ($bling_status_id) {
+					$order_statuses[] = $order_status_id;
+				}
+			}
+			
+			if ($order_statuses) {
+				$fields = ['o.order_id', 'o.order_status_id', 'o.bling_id'];
+					
+				$sql = "SELECT " . implode(', ', $fields) . " ";
+				$sql .= "FROM `" . DB_PREFIX . "order` o ";
+				$sql .= "WHERE o.order_status_id IN (" . implode(",", $order_statuses) . ") ";
+				$sql .= "AND o.bling_id NOT IS NULL AND o.bling_id != '' ";
+					
+				// verifica se ja foi enviada atualizacao pro Bling
+				$sql .= "AND (o.bling_status_id IS NULL OR o.order_status_id != o.bling_status_id) ";
+				$result = $this->db->query($sql);
+				return $this->rows;
+			}
+		}
+	
+		return [];
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 21 de jul de 2020
+	 */
+	private function _getBasicSql() {
+		$query_uf = "SELECT `code` FROM " . DB_PREFIX . "zone z WHERE z.zone_id = %s";
+		$payment_uf = sprintf($query_uf, 'o.payment_zone_id');
+		$shipping_uf = sprintf($query_uf, 'o.shipping_zone_id');
+		
+		$fields = [
+			'o.order_id', 'o.date_added', 'o.date_modified', 'o.store_name', 'o.store_id', 'o.comment',
+			'o.language_id', 'o.customer_id', 'o.customer_group_id',
+			'o.order_status_id', 'o.firstname', 'o.lastname', 'o.email', 'o.telephone', 'o.fax',
+			'o.cpf', 'o.cnpj', 'o.razao_social', 'o.inscricao_estadual',
+			'o.payment_address_1', 'o.payment_numero', 'o.payment_address_2',
+			'o.payment_complemento', 'o.payment_city', 'o.payment_postcode', 'o.payment_code',
+			'o.shipping_firstname', 'o.shipping_lastname',
+			'o.shipping_address_1', 'o.shipping_numero', 'o.shipping_address_2',
+			'o.shipping_complemento', 'o.shipping_city', 'o.shipping_postcode',
+			'o.shipping_code', 'o.shipping_method',
+			'REPLACE(o.shipping_code, \'correios.\', \'\') AS servico_correios'
+		];
+		
+		$sql = "SELECT " . implode(', ', $fields) . ", ";
+		$sql .= "(" . $payment_uf . ") AS payment_uf, ";
+		$sql .= "(" . $shipping_uf . ") AS shipping_uf, ";
+		$sql .= ", (SELECT GROUP_CONCAT(sg.object SEPARATOR ',') FROM " . DB_PREFIX . "bnw_correios sg WHERE sg.order_id = o.order_id GROUP BY sg.order_id) AS objects ";
+		
+		$sql .= "FROM `" . DB_PREFIX . "order` o ";
+		return $sql;
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 21 de jul de 2020
+	 * @param unknown $rows
+	 * @param unknown $bnw_correios
+	 * @param unknown $language
+	 * @param unknown $ignore_shipping
+	 */
+	private function _parseOrders($rows, $bnw_correios, $language) {
+		// se nao tem q considerar frete, nao ha nada a ser feito
+		if ($ignore_shipping) {
+			return $rows;
+		}
+		
+		$shipping_language = [];
+		foreach ($rows as $key => $row) {
+			
+			$shipping_code = explode('.', $row['shipping_code']);
+			$shipping_code = array_shift($shipping_code);
+		
+			$shipping_company_name = '';
+			if ($shipping_code) {
+				if (!isset($shipping_language[$shipping_code])) {
+					$shipping_language[$shipping_code] = $language->load('shipping/' . $shipping_code);
+				}
+					
+				$shipping_company_name = $shipping_language[$shipping_code]['text_title'];
+				$shipping_company_name .= ' - ' . $row['shipping_method'];
+			}
+		
+			$rows[$key]['shipping_company_name'] = $shipping_company_name;
+		
+			// indica se existe geracao de etiqueta automatica pra esse pedido
+			$rows[$key]['is_tracking'] = $bnw_correios->is_tracking($row['servico_correios'], $row['shipping_code']);
+		
+			// indica se a forma de entrega desse pedido é "Correios" de alguma forma
+			$rows[$key]['is_correios'] = $bnw_correios->is_correios_anyway($row['servico_correios'], $row['shipping_code']);
+			if ($rows[$key]['is_correios']) {
+				// o is_correios vai ter o servico_correios atualizado caso exista algum mapeamento para outra forma de entrega
+				$rows[$key]['servico_correios'] = $rows[$key]['is_correios'];
+			}
+		}
+		
+		return $rows;
 	}
 	
 	/**

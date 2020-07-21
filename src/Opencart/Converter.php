@@ -25,8 +25,10 @@ class Converter {
     	$storage_id = $config->get('bling_api_storage');
     	$sync_name = $config->get('bling_api_sync_name');
     	$sync_description = $config->get('bling_api_sync_description');
+    	$sync_mini_description = $config->get('bling_api_sync_mini_description');
     	$sync_price = $config->get('bling_api_sync_price') && $config->get('bling_api_store_price') == \Bling\Resources\Produto::DEFAULT_PRICE;
     	$sync_brand = $config->get('bling_api_sync_brand');
+    	$sync_stock = $config->get('bling_api_sync_stock');
     	
         $bling_data = [];
         $bling_data['codigo'] = $data['sku'];
@@ -50,15 +52,15 @@ class Converter {
         	}
         }
         
-        if (isset($data['mini_description']) && ($sync_description || $is_new)) {
+        if (isset($data['mini_description']) && ($sync_mini_description || $is_new)) {
         	$bling_data['descricaoCurta'] = html_entity_decode($data['mini_description'], ENT_QUOTES, 'UTF-8');
         }
         
-        if (isset($data['quantity'])) {
+        if (isset($data['quantity']) && $sync_stock) {
         	$bling_data['estoque'] = $data['quantity'];
         }
         
-        if (isset($data['storage']) && is_array($data['storage'])) {
+        if (isset($data['storage']) && is_array($data['storage']) && $sync_stock) {
         	$bling_data['deposito']['id'] = $data['storage']['bling_id'];
         	$bling_data['deposito']['estoque'] = $data['storage']['quantity'];
         }
@@ -122,10 +124,10 @@ class Converter {
         			'codigo' => $option['option_sku'],
         			'clonarDadosPai' => $option['use_parent_info'] ? 'S' : 'N'
         		];
-        		if ($storage_id) {
+        		if ($storage_id && $sync_stock) {
         			$variacao['deposito']['id'] = $storage_id;
         			$variacao['deposito']['estoque'] = $option['quantity'];
-        		} else {
+        		} else if ($sync_stock) {
         			$variacao['estoque'] = $option['quantity'];
         		}
         		
@@ -245,8 +247,23 @@ class Converter {
     	
     	if ($has_shipping && $data['shipping_code']) {
     		$transporte['transportadora'] = $data['shipping_company_name'];
-    		if ($data['is_tracking']) {
-    			$transporte['servico_correios'] = $data['servico_correios'];
+    		if ($data['is_correios']) {
+    			$volume['servico'] = $data['servico_correios'];
+    			$volumes = [];
+    			
+    			// envia codigos de rastreamento se houver
+    			if ($data['objects']) {
+    				$objects = explode(',', $data['objects']);
+    				foreach ($objects as $obj) {
+    					$volume['codigoRastreamento'] = $obj;
+    					$volumes[] = ['volume' => $volume];
+    				}
+    			} else {
+    				// se nao tiver, envia informacao de "volume" pra que o bling identifique a integracao de logistica, se necessario
+    				$volumes[] = ['volume' => $volume];
+    			}
+    			
+    			$transporte['volumes'] = $volumes;
     		}
     		
     		$dados_etiqueta['nome'] = trim($data['shipping_firstname']) . ' ' . trim($data['shipping_lastname']);
@@ -259,7 +276,6 @@ class Converter {
     		$dados_etiqueta['uf'] = $data['shipping_uf'];
     		$transporte['dados_etiqueta'] = $dados_etiqueta;
     		
-    		// TODO volumes/codigo rastreamento
     		$bling_data['transporte'] = $transporte;
     	}
     	

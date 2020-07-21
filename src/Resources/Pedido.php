@@ -47,6 +47,39 @@ class Pedido extends Bling {
         
         return $numero;
     }
+    
+    /**
+     *
+     * Atualiza um pedido no Bling com o novo status
+     *
+     * @return bool|mixed|void
+     * @throws \Exception
+     */
+    public function updatePedido($numero, $situacao) {
+    	$success = false;
+    	try {
+    		$data['idSituacao'] = $situacao;
+    		$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'pedido'], true, 'UTF-8');
+    		
+    		$request = $this->configurations['guzzle']->put(
+    			'pedido/'. $numero .'/json/',
+    			['query' => ['xml' => $data]]
+    		);
+    		$response = \json_decode($request->getBody()->getContents(), true);
+    		if ($response && is_array($response) && isset($response['retorno']['pedidos'][0]['pedido']['numero'])) {
+    			$success = true;
+    		}
+    	} catch (\Exception $e){
+    		$this->ResponseException($e);
+    	}
+    	
+    	if (!$success && isset($response['retorno']['erros'])) {
+    		$error = $this->_getError($response);
+    		throw new \Exception($error['message'], $error['code']);
+    	}
+    	
+    	return $success;
+    }
 
 	/**
      *
@@ -144,28 +177,5 @@ class Pedido extends Bling {
     	} catch (\Exception $e){
     		$this->ResponseException($e);
     	}
-    }
-
-    /**
-     *
-     * Atualiza um pedido no Bling com novo array de dados buscando por seu numero
-     *
-     * @return bool|mixed|void
-     * @throws \Exception
-     */
-    public function updatePedido($numero, $data) {
-        try {
-            $request = $this->configurations['guzzle']->put(
-                'pedido/'. $numero .'/json/',
-                ['query' => ['xml' => $data]]
-            );
-            $response = \json_decode($request->getBody()->getContents(), true);
-            if ($response && is_array($response)) {
-                return $response;
-            }
-            return false;
-        } catch (\Exception $e){
-            return $this->ResponseException($e);
-        }
     }
 }

@@ -115,11 +115,11 @@ class Produto extends Bling {
         }
     }
     
-    public function getProdutos($loja, $situacao = [], $page = 1) {
+    public function getProdutos($loja, $situacao = '', $page = 1) {
     	try {
     		$filters = '';
     		if ($situacao) {
-    			$filters = 'situacao[' . implode(',', $situacao) . ']';
+    			$filters = 'situacao[' . $situacao . ']';
     		}
     		
     		$request = $this->configurations['guzzle']->get(
@@ -236,21 +236,43 @@ class Produto extends Bling {
      */
 	private function _getProdutosPorData($loja, $dataInicio, $dataFim, $tipoData, $page = 1) {
         try {
+			$list = [];
+			
+			// produtos ativos
         	$request = $this->configurations['guzzle']->get(
-                'produtos/page=' . (int)$page . '/json/',
-            	['query' => ['loja' => $loja, 'estoque' => 'S', 'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_ATIVO . ']']]
+                'produtos/page=' . (int)$page . '/json/', [
+                	'query' => [
+            			'loja' => $loja, 'estoque' => 'S', 
+            			'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_ATIVO . ']'
+                	]
+                ]
             );
             
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response) && isset($response['retorno']['produtos'])) {
-            	$list = [];
             	foreach ($response['retorno']['produtos'] as $item) {
             		$list[] = $item['produto'];
             	}
-            	return $list;
+            }
+			
+			// produtos inativos
+			$request = $this->configurations['guzzle']->get(
+                'produtos/page=' . (int)$page . '/json/', [
+                	'query' => [
+            			'loja' => $loja, 'estoque' => 'S', 
+            			'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_INATIVO . ']'
+                	]
+                ]
+            );
+            
+            $response = \json_decode($request->getBody()->getContents(), true);
+            if ($response && is_array($response) && isset($response['retorno']['produtos'])) {
+            	foreach ($response['retorno']['produtos'] as $item) {
+            		$list[] = $item['produto'];
+            	}
             }
             
-            return false;
+            return $list ?: false;
         } catch (\Exception $e){
             return $this->ResponseException($e);
         }

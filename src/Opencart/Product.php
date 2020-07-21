@@ -11,6 +11,7 @@ class Product extends \Bling\Opencart\Base {
 	private $sync_price;
 	private $sync_categories;
 	private $sync_description;
+	private $sync_mini_description;
 	private $sync_brand;
 	private $auto_sum_stock;
 	
@@ -21,6 +22,7 @@ class Product extends \Bling\Opencart\Base {
 		
 		$this->sync_name = $registry->get('config')->get('bling_api_sync_name');
 		$this->sync_description = $registry->get('config')->get('bling_api_sync_description');
+		$this->sync_mini_description = $registry->get('config')->get('bling_api_sync_mini_description');
 		$this->sync_price = $registry->get('config')->get('bling_api_sync_price');
 		$this->sync_categories = $registry->get('config')->get('bling_api_sync_categories');
 		$this->sync_brand = $registry->get('config')->get('bling_api_sync_brand');
@@ -168,7 +170,7 @@ class Product extends \Bling\Opencart\Base {
 		$this->db->query($sql);
 		
 		// NOME/DESCRICAO
-		if ($this->sync_name || $this->sync_description) {
+		if ($this->sync_name || $this->sync_description || $this->sync_mini_description) {
 			$updates = [];
 			if ($this->sync_name) {
 				$updates[] = " name = '" . $this->db->escape($data['name']) . "' ";
@@ -176,6 +178,10 @@ class Product extends \Bling\Opencart\Base {
 			
 			if ($this->sync_description) {
 				$updates[] = " description = '" . $this->db->escape($data['description']) . "' ";
+			}
+			
+			if ($this->sync_mini_description) {
+				$updates[] = " mini_description = '" . $this->db->escape($data['mini_description']) . "' ";
 			}
 			
 			if ($updates) {

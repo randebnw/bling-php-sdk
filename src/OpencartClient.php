@@ -3,6 +3,7 @@
 namespace Bling;
 
 use Bling;
+use Bling\Opencart\Order;
 
 class OpencartClient extends \Bling\Opencart\Base {
 	
@@ -323,6 +324,15 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 */
 	public function getOrdersToExport($lib_correios, $lib_language) {
 		return $this->model_order->getOrdersToExport($lib_correios, $lib_language);
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 21 de jul de 2020
+	 */
+	public function getOrdersToSync() {
+		return $this->model_order->getOrdersToSync();
 	}
 	
 	/**
