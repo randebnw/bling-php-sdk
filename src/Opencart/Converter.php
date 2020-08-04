@@ -177,12 +177,12 @@ class Converter {
     	$cliente['celular'] = $data['fax'];
     	$cliente['email'] = $data['email'];
     	
-    	$cliente['endereco'] = $address['address_1'];
-    	$cliente['numero'] = $address['numero'];
-    	$cliente['complemento'] = $address['complemento'];
-    	$cliente['bairro'] = $address['address_2'];
+    	$cliente['endereco'] = trim($address['address_1']);
+    	$cliente['numero'] = trim($address['numero']);
+    	$cliente['complemento'] = trim($address['complemento']);
+    	$cliente['bairro'] = trim($address['address_2']);
     	$cliente['cep'] = $address['postcode'];
-    	$cliente['cidade'] = $address['city'];
+    	$cliente['cidade'] = trim($address['city']);
     	$cliente['uf'] = $address['uf'];
     	$cliente['tipos_contatos'][] = ['tipo_contato' => ['descricao' => \Bling\Resources\Contato::CONTATO_CLIENTE]];
     	
@@ -219,12 +219,12 @@ class Converter {
      		$cliente['contribuinte'] = $data['inscricao_estadual'] ? \Bling\Resources\Contato::CONTRIBUINTE : \Bling\Resources\Contato::CONTRIBUINTE_ISENTO;
     	}
     	
-    	$cliente['endereco'] = $data['payment_address_1'];
-    	$cliente['numero'] = $data['payment_numero'];
-    	$cliente['complemento'] = $data['payment_complemento'];
-    	$cliente['bairro'] = $data['payment_address_2'];
+    	$cliente['endereco'] = trim($data['payment_address_1']);
+    	$cliente['numero'] = trim($data['payment_numero']);
+    	$cliente['complemento'] = trim($data['payment_complemento']);
+    	$cliente['bairro'] = trim($data['payment_address_2']);
     	$cliente['cep'] = $data['payment_postcode'];
-    	$cliente['cidade'] = $data['payment_city'];
+    	$cliente['cidade'] = trim($data['payment_city']);
     	$cliente['uf'] = $data['payment_uf'];
     	$cliente['fone'] = $data['telephone'];
     	$cliente['celular'] = $data['fax'];
@@ -267,12 +267,12 @@ class Converter {
     		}
     		
     		$dados_etiqueta['nome'] = trim($data['shipping_firstname']) . ' ' . trim($data['shipping_lastname']);
-    		$dados_etiqueta['endereco'] = $data['shipping_address_1'];
-    		$dados_etiqueta['numero'] = $data['shipping_numero'];
+    		$dados_etiqueta['endereco'] = trim($data['shipping_address_1']);
+    		$dados_etiqueta['numero'] = trim($data['shipping_numero']);
     		$dados_etiqueta['complemento'] = $data['shipping_complemento'];
-    		$dados_etiqueta['bairro'] = $data['shipping_address_2'];
+    		$dados_etiqueta['bairro'] = trim($data['shipping_address_2']);
     		$dados_etiqueta['cep'] = $data['shipping_postcode'];
-    		$dados_etiqueta['municipio'] = $data['shipping_city'];
+    		$dados_etiqueta['municipio'] = trim($data['shipping_city']);
     		$dados_etiqueta['uf'] = $data['shipping_uf'];
     		$transporte['dados_etiqueta'] = $dados_etiqueta;
     		
@@ -448,11 +448,11 @@ class Converter {
     		$oc_data['razao_social'] = $data['nome'];
     	}
     	
-    	$oc_data['address_1'] = $data['endereco'];
-		$oc_data['address_2'] = $data['bairro'];
-		$oc_data['city']      = $data['cidade'];
-		$oc_data['numero']    = $data['numero'];
-		$oc_data['complemento']    = $data['complemento'];
+    	$oc_data['address_1'] = trim($data['endereco']);
+		$oc_data['address_2'] = trim($data['bairro']);
+		$oc_data['city']      = trim($data['cidade']);
+		$oc_data['numero']    = trim($data['numero']);
+		$oc_data['complemento']    = trim($data['complemento']);
 		$oc_data['postcode']  = preg_replace('/([^0-9])/i', '', $data['cep']);;
     	$oc_data['country_id'] = $config->get('config_country_id');
     	$oc_data['zone_id'] = isset($map_zones[$data['uf']]) ? $map_zones[$data['uf']]['zone_id'] : $config->get('config_zone_id');
@@ -518,11 +518,11 @@ class Converter {
 		$payment_address['tax_id'] = '';
 		$payment_address['firstname'] = $customer_info['firstname'];
 		$payment_address['lastname'] = $customer_info['lastname'];
-		$payment_address['address_1'] = $bling_address['endereco'];
-		$payment_address['address_2'] = $bling_address['bairro'];
-		$payment_address['complemento'] = $bling_address['complemento'];
-		$payment_address['numero'] = $bling_address['numero'];
-		$payment_address['city'] = $bling_address['cidade'];
+		$payment_address['address_1'] = trim($bling_address['endereco']);
+		$payment_address['address_2'] = trim($bling_address['bairro']);
+		$payment_address['complemento'] = trim($bling_address['complemento']);
+		$payment_address['numero'] = trim($bling_address['numero']);
+		$payment_address['city'] = trim($bling_address['cidade']);
 		$payment_address['postcode'] = preg_replace('/([^0-9])/i', '', $bling_address['cep']);;
 		$payment_address['zone'] = $payment_zone['name'];
 		$payment_address['zone_id'] = $payment_zone['zone_id'];
@@ -567,11 +567,11 @@ class Converter {
 			}
 			
 			$shipping_zone = isset($map_zones[$entrega['uf']]) ? $map_zones[$entrega['uf']] : ['zone_id' => $config->get('config_zone_id'), 'name' => 'MG'];
-			$shipping_address['address_1'] = $entrega['endereco'];
-			$shipping_address['address_2'] = $entrega['bairro'];
-			$shipping_address['complemento'] = $entrega['complemento'];
-			$shipping_address['numero'] = $entrega['numero'];
-			$shipping_address['city'] = $entrega['cidade'];
+			$shipping_address['address_1'] = trim($entrega['endereco']);
+			$shipping_address['address_2'] = trim($entrega['bairro']);
+			$shipping_address['complemento'] = trim($entrega['complemento']);
+			$shipping_address['numero'] = trim($entrega['numero']);
+			$shipping_address['city'] = trim($entrega['cidade']);
 			$shipping_address['postcode'] = preg_replace('/([^0-9])/i', '', $entrega['cep']);;
 			$shipping_address['zone'] = $shipping_zone['name'];
 			$shipping_address['zone_id'] = $shipping_zone['zone_id'];
