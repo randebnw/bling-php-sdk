@@ -104,7 +104,7 @@ class Produto extends Bling {
         try {
             $request = $this->configurations['guzzle']->get(
                 'produto/' . $codigo . '/json/',
-            	['query' => ['imagem' => 'S']]
+            	['query' => ['imagem' => 'S', 'estoque' => 'S']]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response) && isset($response['retorno']['produtos'][0]['produto'])) {
@@ -267,13 +267,15 @@ class Produto extends Bling {
             }
 			
 			// produtos inativos
+            $query = [
+            	'loja' => $loja, 'estoque' => 'S',
+            	'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_INATIVO . ']'
+            ];
+            if ($imagem) {
+            	$query['imagem'] = 'S';
+            }
 			$request = $this->configurations['guzzle']->get(
-                'produtos/page=' . (int)$page . '/json/', [
-                	'query' => [
-            			'loja' => $loja, 'estoque' => 'S', 
-            			'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_INATIVO . ']'
-                	]
-                ]
+                'produtos/page=' . (int)$page . '/json/', ['query' => $query]
             );
             
             $response = \json_decode($request->getBody()->getContents(), true);
