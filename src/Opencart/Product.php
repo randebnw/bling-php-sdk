@@ -307,7 +307,7 @@ class Product extends \Bling\Opencart\Base {
 	 * @param unknown $extra_images
 	 */
 	public function updateImages($product_id, $main_image, $extra_images) {
-		$sql = "UPDATE " . DB_PREFIX . "product SET image = '" . $this->db->escape($main_image) . "' product_id = " . (int) $product_id;
+		$sql = "UPDATE " . DB_PREFIX . "product SET image = '" . $this->db->escape($main_image) . "' WHERE product_id = " . (int) $product_id;
 		$this->db->query($sql);
 		
 		$sql = "DELETE FROM " . DB_PREFIX . "product_image WHERE product_id = " . (int) $product_id;

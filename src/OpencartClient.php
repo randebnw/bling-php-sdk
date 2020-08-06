@@ -306,9 +306,12 @@ class OpencartClient extends \Bling\Opencart\Base {
 		if (isset($this->map_product[$item['sku']]) && isset($item['images']) && is_array($item['images'])) {
 			$product_id = $this->map_product[$item['sku']];
 			
+			$oc_images = [];
 			foreach ($item['images'] as $key => $url) {
 				$sku_folder = $this->url->str2url(substr($item['sku'], 0, 3));
 				$img_file = 'data/produtos/' . $sku_folder . '/' . $this->url->str2url($item['name']) . '-' . $product_id . '-' . sprintf('%02s', $key + 1) . '.jpg';
+				$oc_images[] = $img_file;
+				
 				// baixa o arquivo se ainda nao existir
 				if (!is_file(DIR_IMAGE . $img_file) || filesize(DIR_IMAGE . $img_file) == 0) {
 					// cria o diretorio se necessario
@@ -318,15 +321,17 @@ class OpencartClient extends \Bling\Opencart\Base {
 					}
 			
 					$img_content = $curl->requestFile($url);
-					if ($img_content) {
+					if ($img_content !== false) {
 						file_put_contents(DIR_IMAGE . $img_file, $img_content);
+					} else { 
+						throw new \Exception($curl->get_error());
 					}
 				}
 			}
 			
 			// importa imagens
-			$main_image = array_shift($item['images']);
-			$this->model_product->updateImages($product_id, $main_image, $item['images']);
+			$main_image = array_shift($oc_images);
+			$this->model_product->updateImages($product_id, $main_image, $oc_images);
 		}
 	
 		return true;
