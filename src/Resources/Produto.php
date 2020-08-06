@@ -103,7 +103,8 @@ class Produto extends Bling {
     public function getProduto($codigo) {
         try {
             $request = $this->configurations['guzzle']->get(
-                'produto/' . $codigo . '/json/'
+                'produto/' . $codigo . '/json/',
+            	['query' => ['imagem' => 'S']]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response) && isset($response['retorno']['produtos'][0]['produto'])) {
@@ -115,16 +116,21 @@ class Produto extends Bling {
         }
     }
     
-    public function getProdutos($loja, $situacao = '', $page = 1) {
+    public function getProdutos($loja, $situacao = '', $page = 1, $imagem = false) {
     	try {
     		$filters = '';
     		if ($situacao) {
     			$filters = 'situacao[' . $situacao . ']';
     		}
     		
+    		$query = ['filters' => $filters, 'loja' => $loja, 'estoque' => 'S'];
+    		if ($imagem) {
+				$query['imagem'] = 'S';
+			}
+    		
     		$request = $this->configurations['guzzle']->get(
     			'produtos/page=' . (int)$page . '/json/',
-    			['query' => ['filters' => $filters, 'loja' => $loja, 'estoque' => 'S']]
+    			['query' => $query]
     		);
     
     		$response = \json_decode($request->getBody()->getContents(), true);
@@ -213,14 +219,15 @@ class Produto extends Bling {
      * @param unknown $dataInicio
      * @param unknown $dataFim
      * @param number $page
+     * @param boolean $imagem
      * @return mixed|boolean
      */
-    public function getProdutosPorDataInclusao($loja, $dataInicio, $dataFim, $page = 1) {
-    	return $this->_getProdutosPorData($loja, $dataInicio, $dataFim, self::TIPO_DATA_INCLUSAO, $page);
+    public function getProdutosPorDataInclusao($loja, $dataInicio, $dataFim, $page = 1, $imagem = false) {
+    	return $this->_getProdutosPorData($loja, $dataInicio, $dataFim, self::TIPO_DATA_INCLUSAO, $page, $imagem);
     }
     
-    public function getProdutosPorDataAlteracao($loja, $dataInicio, $dataFim, $page = 1) {
-    	return $this->_getProdutosPorData($loja, $dataInicio, $dataFim, self::TIPO_DATA_ALTERACAO, $page);
+    public function getProdutosPorDataAlteracao($loja, $dataInicio, $dataFim, $page = 1, $imagem = false) {
+    	return $this->_getProdutosPorData($loja, $dataInicio, $dataFim, self::TIPO_DATA_ALTERACAO, $page, $imagem);
     }
     
     /**
@@ -232,20 +239,24 @@ class Produto extends Bling {
      * @param unknown $dataFim
      * @param unknown $tipoData
      * @param number $page
+     * @param boolean $imagem
      * @return mixed[]|boolean
      */
-	private function _getProdutosPorData($loja, $dataInicio, $dataFim, $tipoData, $page = 1) {
+	private function _getProdutosPorData($loja, $dataInicio, $dataFim, $tipoData, $page = 1, $imagem = false) {
         try {
 			$list = [];
 			
 			// produtos ativos
+			$query = [
+				'loja' => $loja, 'estoque' => 'S', 
+            	'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_ATIVO . ']'
+			];
+			if ($imagem) {
+				$query['imagem'] = 'S';
+			}
+			
         	$request = $this->configurations['guzzle']->get(
-                'produtos/page=' . (int)$page . '/json/', [
-                	'query' => [
-            			'loja' => $loja, 'estoque' => 'S', 
-            			'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_ATIVO . ']'
-                	]
-                ]
+                'produtos/page=' . (int)$page . '/json/', ['query' => $query]
             );
             
             $response = \json_decode($request->getBody()->getContents(), true);

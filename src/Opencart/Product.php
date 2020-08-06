@@ -301,6 +301,33 @@ class Product extends \Bling\Opencart\Base {
 	/**
 	 * 
 	 * @author Rande A. Moreira
+	 * @since 6 de ago de 2020
+	 * @param unknown $product_id
+	 * @param unknown $main_image
+	 * @param unknown $extra_images
+	 */
+	public function updateImages($product_id, $main_image, $extra_images) {
+		$sql = "UPDATE " . DB_PREFIX . "product SET image = '" . $this->db->escape($main_image) . "' product_id = " . (int) $product_id;
+		$this->db->query($sql);
+		
+		$sql = "DELETE FROM " . DB_PREFIX . "product_image WHERE product_id = " . (int) $product_id;
+		$this->db->query($sql);
+		
+		if (is_array($extra_images)) {
+			foreach ($extra_images as $key => $img) {
+				$this->db->query("INSERT INTO " . DB_PREFIX . "product_image 
+					SET product_id = '" . (int)$product_id . "', 
+					image = '" . $this->db->escape(html_entity_decode($img, ENT_QUOTES, 'UTF-8')) . "', 
+					sort_order = " . (int)$key);
+			}
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
 	 * @since 21 de mai de 2020
 	 * @param unknown $sku
 	 * @param unknown $quantity

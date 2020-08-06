@@ -374,12 +374,16 @@ class Converter {
     		}
     	}
     	
-    	/*if (isset($data['storage']) && is_array($data['storage'])) {
-    		$oc_data['deposito']['id'] = $data['storage']['bling_id'];
-    		$oc_data['deposito']['estoque'] = $data['storage']['quantity'];
-    	}*/
-    	
     	$oc_data['manufacturer'] = trim($data['marca']);
+    	
+    	if (isset($data['imagem']) && is_array($data['imagem'])) {
+    		$oc_data['images'] = [];
+    		foreach ($data['imagem'] as $img) {
+    			if ($img['link']) {
+    				$oc_data['images'][] = $img['link'];
+    			}
+    		}
+    	}
     	
     	if (isset($data['opcionais'])) {
     		$oc_data['options'] = [];

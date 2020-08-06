@@ -11,6 +11,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 	private $load;
 	
 	private $api;
+	private $url;
 	
 	/**
 	 * 
@@ -86,6 +87,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 			self::$instance->model_option = new \Bling\Opencart\Option($registry);
 			self::$instance->model_order = new \Bling\Opencart\Order($registry);
 			self::$instance->config = new \Bling\Opencart\Config($registry->get('config'));
+			self::$instance->url = $registry->get('url');
 			
 			self::$instance->sync_categories = self::$instance->config->get('bling_api_sync_categories');
 			self::$instance->sync_brand = self::$instance->config->get('bling_api_sync_brand');
@@ -283,6 +285,50 @@ class OpencartClient extends \Bling\Opencart\Base {
 			}
 		}
 		
+		return true;
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 6 de ago de 2020
+	 * @param unknown $item
+	 * @param BnwCurl $curl
+	 */
+	public function importImages($item, $curl) {
+		if (is_null($this->map_product)) {
+			$this->initMaps();
+		}
+	
+		$this->error = '';
+	
+		$product_id = 0;
+		if (isset($this->map_product[$item['sku']]) && isset($item['images']) && is_array($item['images'])) {
+			$product_id = $this->map_product[$item['sku']];
+			
+			foreach ($item['images'] as $key => $url) {
+				$sku_folder = $this->url->str2url(substr($item['sku'], 0, 3));
+				$img_file = 'data/produtos/' . $sku_folder . '/' . $this->url->str2url($item['name']) . '-' . $product_id . '-' . sprintf('%02s', $key + 1) . '.jpg';
+				// baixa o arquivo se ainda nao existir
+				if (!is_file(DIR_IMAGE . $img_file) || filesize(DIR_IMAGE . $img_file) == 0) {
+					// cria o diretorio se necessario
+					$dir = DIR_IMAGE . dirname($img_file);
+					if (!is_dir($dir)) {
+						@mkdir($dir, 0755, true);
+					}
+			
+					$img_content = $curl->requestFile($url);
+					if ($img_content) {
+						file_put_contents(DIR_IMAGE . $img_file, $img_content);
+					}
+				}
+			}
+			
+			// importa imagens
+			$main_image = array_shift($item['images']);
+			$this->model_product->updateImages($product_id, $main_image, $item['images']);
+		}
+	
 		return true;
 	}
 	
