@@ -93,7 +93,7 @@ class Order extends \Bling\Opencart\Base {
 				$sql = "SELECT " . implode(', ', $fields) . " ";
 				$sql .= "FROM `" . DB_PREFIX . "order` o ";
 				$sql .= "WHERE o.order_status_id IN (" . implode(",", $order_statuses) . ") ";
-				$sql .= "AND o.bling_id NOT IS NULL AND o.bling_id != '' ";
+				$sql .= "AND o.bling_id IS NOT NULL AND o.bling_id != '' ";
 					
 				// verifica se ja foi enviada atualizacao pro Bling
 				$sql .= "AND (o.bling_status_id IS NULL OR o.order_status_id != o.bling_status_id) ";
