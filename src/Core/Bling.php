@@ -207,7 +207,11 @@ abstract class Bling
     			$keys = array_keys($error_copy);
     			$code = (int) $keys[0];
     			if (isset($error_copy[$code])) {
-    				$message = (string) $error_copy[$code];
+    				if (is_array($error_copy[$code])) {
+    					$message = array_shift($error_copy[$code]);
+    				} else {
+    					$message = (string) $error_copy[$code];
+    				}
     			}
     		}
     	}
