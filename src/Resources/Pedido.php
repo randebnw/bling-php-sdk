@@ -2,6 +2,7 @@
 namespace Bling\Resources;
 
 use Bling\Core\Bling;
+
 /**
  *
  * Essa classe é resposavel por lidar com os pedidos dentro do Bling.
@@ -30,7 +31,7 @@ class Pedido extends Bling {
         	$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'pedido'], true, 'UTF-8');
         	$request = $this->configurations['guzzle']->post(
                 'pedido/json/',
-                ['query' => ['xml' => $xml]]
+                ['body' => ['xml' => $xml]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
         	if ($response && is_array($response) && isset($response['retorno']['pedidos'][0]['pedido']['numero'])) {

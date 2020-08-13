@@ -46,7 +46,7 @@ class Produto extends Bling {
         	$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produto'], true, 'UTF-8');
             $request = $this->configurations['guzzle']->post(
                 'produto/json/',
-                ['query' => ['xml' => $xml]]
+                ['body' => ['xml' => $xml]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response) && isset($response['retorno']['produtos'][0][0]['produto']['codigo'])) {
@@ -75,7 +75,7 @@ class Produto extends Bling {
     		$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produto'], true, 'UTF-8');
     		$request = $this->configurations['guzzle']->post(
     			'produto/'. $codigo .'/json/',
-    			['query' => ['xml' => $xml]]
+    			['body' => ['xml' => $xml]]
     		);
     		$response = \json_decode($request->getBody()->getContents(), true);
     		if ($response && is_array($response) && isset($response['retorno']['produtos'][0][0]['produto']['codigo'])) {
@@ -163,7 +163,7 @@ class Produto extends Bling {
     		$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produtosLoja'], true, 'UTF-8');
             $request = $this->configurations['guzzle']->post(
                 'produtoLoja/' . $loja . '/' . $codigo . '/json/',
-                ['query' => ['xml' => $xml]]
+                ['body' => ['xml' => $xml]]
             );
     
     		$response = \json_decode($request->getBody()->getContents(), true);
@@ -195,7 +195,7 @@ class Produto extends Bling {
     		$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'produtosLoja'], true, 'UTF-8');
             $request = $this->configurations['guzzle']->put(
                 'produtoLoja/' . $loja . '/' . $codigo . '/json/',
-                ['query' => ['xml' => $xml]]
+                ['body' => ['xml' => $xml]]
             );
     
     		$response = \json_decode($request->getBody()->getContents(), true);
