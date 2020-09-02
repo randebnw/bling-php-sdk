@@ -169,7 +169,7 @@ class Order extends \Bling\Opencart\Base {
 			$rows[$key]['is_tracking'] = $bnw_correios->is_tracking($row['servico_correios'], $row['shipping_code']);
 		
 			// indica se a forma de entrega desse pedido é "Correios" de alguma forma
-			$rows[$key]['is_correios'] = $bnw_correios->is_correios_anyway($row['servico_correios'], $row['shipping_code']);
+			$rows[$key]['is_correios'] = $bnw_correios->is_correios_anyway($row['shipping_code']);
 			if ($rows[$key]['is_correios']) {
 				// o is_correios vai ter o servico_correios atualizado caso exista algum mapeamento para outra forma de entrega
 				$rows[$key]['servico_correios'] = $rows[$key]['is_correios'];
