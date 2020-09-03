@@ -13,6 +13,8 @@ use Bling\Core\Bling;
  * @version 1.0.0
  */
 class Pedido extends Bling {
+	const EXCEPTION_DUPLICATED_ORDER = 39;
+	
 	public function __construct($configurations) {
         parent::__construct($configurations);
     }
