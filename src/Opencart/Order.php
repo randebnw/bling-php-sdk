@@ -125,8 +125,7 @@ class Order extends \Bling\Opencart\Base {
 			'o.shipping_firstname', 'o.shipping_lastname',
 			'o.shipping_address_1', 'o.shipping_numero', 'o.shipping_address_2',
 			'o.shipping_complemento', 'o.shipping_city', 'o.shipping_postcode',
-			'o.shipping_code', 'o.shipping_method',
-			'REPLACE(o.shipping_code, \'correios.\', \'\') AS servico_correios'
+			'o.shipping_code', 'o.shipping_method'
 		];
 		
 		$sql = "SELECT " . implode(', ', $fields) . ", ";
@@ -166,7 +165,7 @@ class Order extends \Bling\Opencart\Base {
 			$rows[$key]['shipping_company_name'] = $shipping_company_name;
 		
 			// indica se existe geracao de etiqueta automatica pra esse pedido
-			$rows[$key]['is_tracking'] = $bnw_correios->is_tracking($row['servico_correios'], $row['shipping_code']);
+			$rows[$key]['is_tracking'] = $bnw_correios->is_tracking($row['shipping_code']);
 		
 			// indica se a forma de entrega desse pedido é "Correios" de alguma forma
 			$rows[$key]['is_correios'] = $bnw_correios->is_correios_anyway($row['shipping_code']);
