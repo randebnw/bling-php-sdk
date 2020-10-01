@@ -29,6 +29,7 @@ class Converter {
     	$sync_price = $config->get('bling_api_sync_price') && $config->get('bling_api_store_price') == \Bling\Resources\Produto::DEFAULT_PRICE;
     	$sync_brand = $config->get('bling_api_sync_brand');
     	$sync_stock = $config->get('bling_api_sync_stock');
+    	$default_unit = $config->get('bling_api_unit');
     	
         $bling_data = [];
         $bling_data['codigo'] = $data['sku'];
@@ -43,6 +44,10 @@ class Converter {
         
         if (isset($data['price']) && ($sync_price || $is_new)) {
         	$bling_data['vlr_unit'] = $data['price'];
+        }
+        
+        if ($default_unit) {
+        	$bling_data['un'] = substr($default_unit, 0, 6);
         }
         
         if (isset($data['description']) && !empty($data['description']) && ($sync_description || $is_new)) {
