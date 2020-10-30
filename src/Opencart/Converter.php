@@ -131,6 +131,7 @@ class Converter {
         				'clonarDadosPai' => $option['use_parent_info'] ? 'S' : 'N'
         			];
         		} else {
+        			// estoque em grade
         			$nome_variacao = [];
         			foreach ($option['option_name'] as $key => $opt_name) {
         				$nome_variacao[] = $opt_name . ':' . $option['option_value'][$key];
@@ -406,14 +407,30 @@ class Converter {
     	
     	if (isset($data['opcionais'])) {
     		$oc_data['options'] = [];
+    		$oc_data['combined_options'] = [];
     		foreach ($data['opcionais'] as $item) {
-    			$oc_data['options'][] = [
-    				'sku' => $item['codigo'],
-					'name' => trim($item['nome']),
-					'value' => trim($item['valor']),
-					'quantity' => $item['estoque'],
-					'price' => $item['preco']
-    			];
+    			if (!isset($item['combined']) || !$item['combined']) {
+    				// opcao simples
+    				$oc_data['options'][] = [
+    					'sku' => $item['codigo'],
+    					'name' => trim($item['nome']),
+    					'value' => trim($item['valor']),
+    					'quantity' => $item['estoque'],
+    					'price' => $item['preco']
+    				];
+    			} else if (count($item['opcoes']) == 2) {
+    				list($parentName, $parentValue) = explode(':', $item['opcoes'][0]);
+    				list($childName, $childValue) = explode(':', $item['opcoes'][1]);
+    				$oc_data['combined_options'][] = [
+    					'sku' => $item['codigo'],
+    					'options' => [
+    						['name' => trim($parentName), 'value' => trim($parentValue)],
+    						['name' => trim($childName), 'value' => trim($childValue)],
+    					],
+    					'quantity' => $item['estoque'],
+    					'price' => $item['preco']
+    				];
+    			}
     		}
     	}
     	

@@ -66,6 +66,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 	private $sync_brand;
 	
 	private $new_products = 0;
+	private $has_combined_options = false;
 	
 	private static $instance;
 	
@@ -91,6 +92,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 			
 			self::$instance->sync_categories = self::$instance->config->get('bling_api_sync_categories');
 			self::$instance->sync_brand = self::$instance->config->get('bling_api_sync_brand');
+			self::$instance->has_combined_options = is_file(DIR_VQMOD . '99_two_dimensional_options.xml');
 		}
 		
 		return self::$instance;
@@ -269,6 +271,64 @@ class OpencartClient extends \Bling\Opencart\Base {
 			}
 			
 			$item['options'] = $oc_options;
+		} else if (isset($item['combined_options']) && $this->has_combined_options) {
+			$oc_options = [];
+			foreach ($item['combined_options'] as $combined_option) {
+				foreach ($combined_option['options'] as $opt) {
+					$option_id = 0;
+					// verifica se existe o opcional
+					if (!isset($this->map_option_id[$opt['name']])) {
+						$option_id = $this->model_option->insert($opt['name']);
+						$this->map_option_id[$opt['name']] = $option_id;
+					}
+						
+					// verifica se existe o valor do opcional
+					if (!isset($this->map_options[$opt['name']][$opt['value']])) {
+						$option_id = $this->map_option_id[$opt['name']];
+						$option_value_id = $this->model_option->insert_value($option_id, $opt['value']);
+						$this->map_options[$opt['name']][$opt['value']] = [
+							'name' => trim($opt['value']),
+							'option_value_id' => $option_value_id,
+							'option_id' => $option_id,
+						];
+					}
+				}
+				
+				$parent_option = $combined_option['options'][0];
+				$child_option = $combined_option['options'][1];
+				if (isset($this->map_options[$parent_option['name']][$parent_option['value']])
+					&& isset($this->map_options[$child_option['name']][$child_option['value']])) {
+					
+					$oc_parent_option = $this->map_options[$parent_option['name']][$parent_option['value']];
+					$oc_child_option = $this->map_options[$child_option['name']][$child_option['value']];
+					$parent_id = $oc_parent_option['option_id'];
+					$child_id = $oc_child_option['option_id'];
+					
+					// verifica se ja inicializou essa combinacao
+					if (!isset($oc_options[$parent_id][$child_id])) {
+						$oc_options[$parent_id][$child_id] = [];
+					}
+		
+					$oc_opt['parent_value_id'] = trim($oc_parent_option['option_value_id']);
+					$oc_opt['parent_option_id'] = trim($oc_parent_option['option_id']);
+					
+					$oc_opt['child_value_id'] = trim($oc_child_option['option_value_id']);
+					$oc_opt['child_option_id'] = trim($oc_child_option['option_id']);
+					$oc_opt['sku'] = $opt['sku'];
+					$oc_opt['quantity'] = $opt['quantity'];
+					$oc_opt['price'] = 0;
+					$oc_opt['price_prefix'] = '+';
+		
+					if ($opt['price'] != $item['price']) {
+						$oc_opt['price'] = abs($item['price'] - $opt['price']);
+						$oc_opt['price_prefix'] = $item['price'] < $opt['price'] ? '+' : '-';
+					}
+		
+					$oc_options[$parent_id][$child_id][] = $oc_opt;
+				}
+			}
+				
+			$item['combined_options'] = $oc_options;
 		}
 		
 		$product_id = 0;

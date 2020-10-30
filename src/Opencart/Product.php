@@ -14,6 +14,7 @@ class Product extends \Bling\Opencart\Base {
 	private $sync_mini_description;
 	private $sync_brand;
 	private $auto_sum_stock;
+	private $has_combined_options;
 	
 	public function __construct($registry) {
 		parent::__construct($registry);
@@ -27,6 +28,7 @@ class Product extends \Bling\Opencart\Base {
 		$this->sync_categories = $registry->get('config')->get('bling_api_sync_categories');
 		$this->sync_brand = $registry->get('config')->get('bling_api_sync_brand');
 		$this->auto_sum_stock = $registry->get('config')->get('bling_api_auto_sum_stock');
+		$this->has_combined_options = is_file(DIR_VQMOD . '99_two_dimensional_options.xml');
 	}
 	
 	public function get_all() {
@@ -104,6 +106,7 @@ class Product extends \Bling\Opencart\Base {
 		}
 		
 		// OPCIONAIS
+		$is_combined = false;
 		if (isset($data['options']) && $data['options']) {
 			foreach ($data['options'] as $option_id => $values) {
 				$this->db->query("
@@ -130,6 +133,31 @@ class Product extends \Bling\Opencart\Base {
 					");
 				}
 			}
+		} else if ($this->has_combined_options && isset($data['combined_options']) && $data['combined_options']) {
+			$is_combined = true;
+			foreach ($data['combined_options'] as $parent_id => $combined_option) {
+				foreach ($combined_option as $child_id => $values) {
+					foreach ($values as $option_value) {
+						$this->db->query("
+							INSERT INTO " . DB_PREFIX . "tdo_option_value SET product_id = '" . (int)$product_id . "', 
+							parent_option_id = '" . (int)$option_value['parent_option_id'] . "', 
+							child_option_id = '" . (int)$option_value['child_option_id'] . "', 
+							parent_option_value_id = '" . (int)$option_value['parent_value_id'] . "', 
+							child_value_id = '" . (int)$option_value['child_option_value_id'] . "'
+						");
+						$tdo_id = $this->db->getLastId();
+						$this->db->query("
+							INSERT INTO " . DB_PREFIX . "tdo_data SET tdo_id = " . (int) $tdo_id . ", 
+							product_id = '" . (int)$product_id . "', model = '" . $option_value['sku'] . "', 
+							extra = '', quantity = '" . (int)$option_value['quantity'] . "', 
+							subtract = " . (int)$data['subtract'] . ", 
+							price_prefix = '" . $option_value['price_prefix'] . "', 
+							price = '" . $option_value['price'] . "', 
+							special = ''
+						");
+					}	
+				}
+			}
 		}
 		
 		// define url amigavel
@@ -139,7 +167,7 @@ class Product extends \Bling\Opencart\Base {
 			$this->db->query("INSERT INTO " . DB_PREFIX . "url_alias SET query = 'product_id=" . (int)$product_id . "', keyword = '" . $this->db->escape($keyword) . "'");
 		}
 		
-		$this->_autoSumStock($product_id);
+		$this->_autoSumStock($product_id, $is_combined);
 		return $product_id;
 	}
 	
@@ -214,6 +242,7 @@ class Product extends \Bling\Opencart\Base {
 		}
 		
 		// OPCIONAIS
+		$is_combined = false;
 		if (isset($data['options']) && $data['options']) {
 			$product_options = $this->db->query("
 				SELECT ov.product_option_value_id, ov.option_sku, o.option_id, o.product_option_id 
@@ -278,7 +307,7 @@ class Product extends \Bling\Opencart\Base {
 						if ($this->sync_price) {
 							$sql .= "
 								, price = " . (float)$product_option_value['price'] . "
-								, price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "'";
+								, price_prefix = '" . $this->db->escape($product_option_value['price_prefix']) . "' ";
 						}
 					
 						$sql .= "WHERE product_option_value_id = " . $product_option_value['product_option_value_id'];
@@ -293,9 +322,75 @@ class Product extends \Bling\Opencart\Base {
 					DELETE FROM " . DB_PREFIX . "product_option_value 
 					WHERE product_option_id = " . (int)$product_option_id . " AND option_value_id NOT IN (" . implode(",", $options_values_id) . ") ");
 			}
+		} else if ($this->has_combined_options && isset($data['combined_options']) && $data['combined_options']) {
+			$is_combined = true;
+			$product_options = $this->db->query("
+				SELECT ov.id, ov.parent_option_id, ov.child_option_id, ov.parent_option_value_id, ov.child_option_value_id
+				FROM " . DB_PREFIX . "tdo_option_value ov
+				WHERE ov.product_id = " . $product_id
+			);
+			
+			$map_combined_id = [];
+			foreach ($product_options->rows as $item) {
+				$parent_option_id = $item['parent_option_id'];
+				$child_option_id = $item['child_option_id'];
+				$parent_option_value_id = $item['parent_option_value_id'];
+				$child_option_value_id = $item['child_option_value_id'];
+				$map_combined_id[$parent_option_id][$child_option_id][$parent_option_value_id][$child_option_value_id] = $item['id'];
+			}
+			
+			$not_delete = [];
+			foreach ($data['combined_options'] as $parent_id => $combined_option) {
+				foreach ($combined_option as $child_id => $values) {
+					foreach ($values as $option_value) {
+						$parent_value_id = $option_value['parent_value_id'];
+						$child_value_id = $option_value['child_option_value_id'];
+						if (!isset($map_combined_id[$parent_id][$child_id][$parent_value_id][$child_value_id])) {
+							$this->db->query("
+								INSERT INTO " . DB_PREFIX . "tdo_option_value SET product_id = '" . (int)$product_id . "',
+								parent_option_id = '" . (int)$option_value['parent_option_id'] . "',
+								child_option_id = '" . (int)$option_value['child_option_id'] . "',
+								parent_option_value_id = '" . (int)$option_value['parent_value_id'] . "',
+								child_option_value_id = '" . (int)$option_value['child_value_id'] . "'
+							");
+							$tdo_id = $this->db->getLastId();
+							$this->db->query("
+								INSERT INTO " . DB_PREFIX . "tdo_data SET tdo_id = " . (int) $tdo_id . ",
+								product_id = '" . (int)$product_id . "', model = '" . $option_value['sku'] . "',
+								extra = '', quantity = '" . (int)$option_value['quantity'] . "',
+								subtract = " . (int)$data['subtract'] . ",
+								price_prefix = '" . $option_value['price_prefix'] . "',
+								price = '" . $option_value['price'] . "',
+								special = ''
+							");
+							
+							$not_delete[] = $tdo_id;
+						} else {
+							$tdo_id = $map_combined_id[$parent_id][$child_id][$parent_value_id][$child_value_id];
+							$sql = "UPDATE " . DB_PREFIX . "tdo_data ";
+							$sql .= "SET model = '" . $option_value['sku'] . "', "; 
+							$sql .= "quantity = '" . (int)$option_value['quantity'] . "' "; 
+							
+							if ($this->sync_price) {
+								$sql .= ", price_prefix = '" . $option_value['price_prefix'] . "' "; 
+								$sql .= ", price = '" . $option_value['price'] . "' "; 
+							}
+							
+							$sql .= "WHERE tdo_id = " . (int) $tdo_id;
+							$this->db->query($sql);
+							
+							$not_delete[] = $tdo_id;
+						}
+					}
+				}
+			}
+			
+			// exclui opcoes que nao existem mais
+			$this->db->query("DELETE FROM " . DB_PREFIX . "tdo_option_value WHERE product_id = " . (int)$product_id . " AND `id` NOT IN (" . implode(',', $not_delete) . ")");
+			$this->db->query("DELETE FROM " . DB_PREFIX . "tdo_data WHERE product_id = " . (int)$product_id . " AND tdo_id NOT IN (" . implode(',', $not_delete) . ")");
 		}
 		
-		$this->_autoSumStock($product_id);
+		$this->_autoSumStock($product_id, $is_combined);
 	}
 	
 	/**
@@ -366,9 +461,14 @@ class Product extends \Bling\Opencart\Base {
 	 * @since 24 de mai de 2020
 	 * @param unknown $product_id
 	 */
-	private function _autoSumStock($product_id) {
+	private function _autoSumStock($product_id, $is_combined) {
 		if ($this->auto_sum_stock) {
-			$sql = "SELECT SUM(quantity) AS total FROM " . DB_PREFIX . "product_option_value WHERE product_id = " . (int) $product_id;
+			$stock_table = 'product_option_value';
+			if ($is_combined && $this->has_combined_options) {
+				$stock_table = 'tdo_data';
+			}
+			
+			$sql = "SELECT SUM(quantity) AS total FROM " . DB_PREFIX . $stock_table . " WHERE product_id = " . (int) $product_id;
 			$result = $this->db->query($sql);
 			
 			// o estoque soh sera atualizado se o produto realmente tiver opcionais do tipo "escolha"
