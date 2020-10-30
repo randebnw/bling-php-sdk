@@ -124,11 +124,25 @@ class Converter {
         if (isset($data['options']) && count($data['options']) > 0) {
         	$bling_data['variacoes']['variacao'] = [];
         	foreach ($data['options'] as $option) {
-        		$variacao = [
-        			'nome' => $option['option_name'] . ':' . $option['option_value'],
-        			'codigo' => $option['option_sku'],
-        			'clonarDadosPai' => $option['use_parent_info'] ? 'S' : 'N'
-        		];
+        		if (!isset($option['combined']) || !$option['combined']) {
+        			$variacao = [
+        				'nome' => $option['option_name'] . ':' . $option['option_value'],
+        				'codigo' => $option['option_sku'],
+        				'clonarDadosPai' => $option['use_parent_info'] ? 'S' : 'N'
+        			];
+        		} else {
+        			$nome_variacao = [];
+        			foreach ($option['option_name'] as $key => $opt_name) {
+        				$nome_variacao[] = $opt_name . ':' . $option['option_value'][$key];
+        			}
+        			
+        			$variacao = [
+        				'nome' => implode('|', $nome_variacao),
+        				'codigo' => $option['option_sku'],
+        				'clonarDadosPai' => $option['use_parent_info'] ? 'S' : 'N'
+        			];
+        		}
+        		
         		if ($storage_id && $sync_stock) {
         			$variacao['deposito']['id'] = $storage_id;
         			$variacao['deposito']['estoque'] = $option['quantity'];
