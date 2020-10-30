@@ -138,7 +138,7 @@ class Converter {
         			}
         			
         			$variacao = [
-        				'nome' => implode('|', $nome_variacao),
+        				'nome' => implode(';', $nome_variacao),
         				'codigo' => $option['option_sku'],
         				'clonarDadosPai' => $option['use_parent_info'] ? 'S' : 'N'
         			];
