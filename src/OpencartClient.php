@@ -229,7 +229,6 @@ class OpencartClient extends \Bling\Opencart\Base {
 			}	
 		}
 		
-		// TODO - tratar combined options
 		if (isset($item['options'])) {
 			$oc_options = [];
 			foreach ($item['options'] as $opt) {
