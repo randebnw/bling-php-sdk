@@ -143,7 +143,7 @@ class Product extends \Bling\Opencart\Base {
 							parent_option_id = '" . (int)$option_value['parent_option_id'] . "', 
 							child_option_id = '" . (int)$option_value['child_option_id'] . "', 
 							parent_option_value_id = '" . (int)$option_value['parent_value_id'] . "', 
-							child_value_id = '" . (int)$option_value['child_option_value_id'] . "'
+							child_option_value_id = '" . (int)$option_value['child_value_id'] . "'
 						");
 						$tdo_id = $this->db->getLastId();
 						$this->db->query("
