@@ -92,7 +92,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 			
 			self::$instance->sync_categories = self::$instance->config->get('bling_api_sync_categories');
 			self::$instance->sync_brand = self::$instance->config->get('bling_api_sync_brand');
-			self::$instance->has_combined_options = is_file(DIR_VQMOD . '99_two_dimensional_options.xml');
+			self::$instance->has_combined_options = is_file(DIR_VQMOD . 'xml/99_two_dimensional_options.xml');
 		}
 		
 		return self::$instance;
