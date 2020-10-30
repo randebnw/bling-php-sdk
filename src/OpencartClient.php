@@ -313,14 +313,14 @@ class OpencartClient extends \Bling\Opencart\Base {
 					
 					$oc_opt['child_value_id'] = trim($oc_child_option['option_value_id']);
 					$oc_opt['child_option_id'] = trim($oc_child_option['option_id']);
-					$oc_opt['sku'] = $opt['sku'];
-					$oc_opt['quantity'] = $opt['quantity'];
+					$oc_opt['sku'] = $combined_option['sku'];
+					$oc_opt['quantity'] = $combined_option['quantity'];
 					$oc_opt['price'] = 0;
 					$oc_opt['price_prefix'] = '+';
 		
 					if ($opt['price'] != $item['price']) {
-						$oc_opt['price'] = abs($item['price'] - $opt['price']);
-						$oc_opt['price_prefix'] = $item['price'] < $opt['price'] ? '+' : '-';
+						$oc_opt['price'] = abs($item['price'] - $combined_option['price']);
+						$oc_opt['price_prefix'] = $item['price'] < $combined_option['price'] ? '+' : '-';
 					}
 		
 					$oc_options[$parent_id][$child_id][] = $oc_opt;
