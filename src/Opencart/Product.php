@@ -28,7 +28,7 @@ class Product extends \Bling\Opencart\Base {
 		$this->sync_categories = $registry->get('config')->get('bling_api_sync_categories');
 		$this->sync_brand = $registry->get('config')->get('bling_api_sync_brand');
 		$this->auto_sum_stock = $registry->get('config')->get('bling_api_auto_sum_stock');
-		$this->has_combined_options = is_file(DIR_VQMOD . '99_two_dimensional_options.xml');
+		$this->has_combined_options = is_file(DIR_VQMOD . 'xml/99_two_dimensional_options.xml');
 	}
 	
 	public function get_all() {
