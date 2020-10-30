@@ -408,6 +408,7 @@ class Converter {
     	if (isset($data['opcionais'])) {
     		$oc_data['options'] = [];
     		$oc_data['combined_options'] = [];
+    		$is_combined = false;
     		foreach ($data['opcionais'] as $item) {
     			if (!isset($item['combined']) || !$item['combined']) {
     				// opcao simples
@@ -419,6 +420,7 @@ class Converter {
     					'price' => $item['preco']
     				];
     			} else if (count($item['opcoes']) == 2) {
+    				$is_combined = true;
     				list($parentName, $parentValue) = explode(':', $item['opcoes'][0]);
     				list($childName, $childValue) = explode(':', $item['opcoes'][1]);
     				$oc_data['combined_options'][] = [
@@ -431,6 +433,12 @@ class Converter {
     					'price' => $item['preco']
     				];
     			}
+    		}
+    		
+    		if (!$is_combined) {
+    			unset($oc_data['combined_options']);
+    		} else {
+    			unset($oc_data['options']);
     		}
     	}
     	
