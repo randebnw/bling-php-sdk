@@ -74,7 +74,7 @@ class Order extends \Bling\Opencart\Base {
 						$result[$row['order_product_id']]['sku'] = $row['sku'];
 						if ($parent_name && $child_name && $parent_value && $child_value) {
 							$result[$row['order_product_id']]['name'] .= ' ' . trim($parent_name) . ':' . trim($parent_value);
-							$result[$row['order_product_id']]['name'] .= ';' . trim($parent_value) . ':' . trim($child_value);
+							$result[$row['order_product_id']]['name'] .= ';' . trim($child_name) . ':' . trim($child_value);
 						}
 					}
 				}
