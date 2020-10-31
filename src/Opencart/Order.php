@@ -3,6 +3,17 @@
 namespace Bling\Opencart;
 
 class Order extends \Bling\Opencart\Base {
+	private $has_combined_options;
+	private $model_option;
+	private $map_options_name;
+	private $map_option_values_name;
+	
+	public function __construct($registry) {
+		parent::__construct($registry);
+		$this->model_option = new \Bling\Opencart\Option($registry);
+		$this->has_combined_options = is_file(DIR_VQMOD . 'xml/99_two_dimensional_options.xml');
+	}
+	
 	/**
 	 * 
 	 * @author Rande A. Moreira
@@ -26,9 +37,66 @@ class Order extends \Bling\Opencart\Base {
 	 * @param unknown $order_id
 	 */
 	public function getOrderProducts($order_id) {
+		$result = $this->_getNormalOrderProducts($order_id);;
+		if ($this->has_combined_options) {
+			// tem o modulo instalado, entao tem q tentar buscar produtos com tdo_id > 0 e montar o resultado corretamente
+			if (!$this->map_options) {
+				$options = $this->model_option->get_all();
+				foreach ($options as $option_id => $item) {
+					$this->map_options_name[$option_id] = $item['name'];
+					foreach ($item['values'] as $opt) {
+						$this->map_option_values_name[$opt['option_value_id']] = $opt['name'];
+					}
+				}
+			}
+			
+			$sql = "SELECT op.*, opv.parent_option_id, opv.parent_option_value_id, ";
+			$sql .= "opv.child_option_id, opv.child_option_value_id, od.model AS sku ";
+			$sql .= "FROM " . DB_PREFIX . "order_product op ";
+			$sql .= "JOIN " . DB_PREFIX . "tdo_option_value opv ON (opv.product_id = op.product_id AND op.tdo_id > 0) ";
+			$sql .= "JOIN " . DB_PREFIX . "tdo_data od ON od.tdo_id = opv.id ";
+			$sql .= "WHERE op.order_id = " . (int)$order_id . " ";
+			$query = $this->db->query($sql);
+			
+			if ($query->rows) {
+				foreach ($query->rows as $row) {
+					if (!isset($result[$row['order_product_id']])) {
+						$result[$row['order_product_id']] = $row;
+					}
+						
+					// sobrescreve o sku com opcional, se houver
+					if (!empty($row['sku'])) {
+						$parent_name = isset($this->map_options_name[$row['parent_option_id']]) ? $this->map_options_name[$row['parent_option_id']] : '';
+						$child_name = isset($this->map_options_name[$row['child_option_id']]) ? $this->map_options_name[$row['child_option_id']] : '';
+						$parent_value = isset($this->map_option_values_name[$row['parent_option_value_id']]) ? $this->map_option_values_name[$row['parent_option_value_id']] : '';
+						$child_value = isset($this->map_option_values_name[$row['child_option_value_id']]) ? $this->map_option_values_name[$row['child_option_value_id']] : '';
+						
+						$result[$row['order_product_id']]['sku'] = $row['sku'];
+						if ($parent_name && $child_name && $parent_value && $child_value) {
+							$result[$row['order_product_id']]['name'] .= ' ' . trim($parent_name) . ':' . trim($parent_value);
+							$result[$row['order_product_id']]['name'] .= ';' . trim($parent_value) . ':' . trim($child_value);
+						}
+					}
+				}
+			}
+		}
+		
+		return $result;
+	}
+	
+	/**
+	 * 
+	 * @author Rande A. Moreira
+	 * @since 31 de out de 2020
+	 * @param unknown $order_id
+	 */
+	private function _getNormalOrderProducts($order_id) {
+		// se tem o modulo instalado, entao na busca "normal" a gente traz só quem tiver tdo_id = 0
+		$combined_sql = $this->has_combined_options ? ' AND op.tdo_id = 0 ' : '';
+		
 		$sql = "SELECT op.*, p.sku, opt.name AS option_name, opt.value AS option_value, pov.option_sku ";
 		$sql .= "FROM " . DB_PREFIX . "order_product op ";
-		$sql .= "JOIN " . DB_PREFIX . "product p ON op.product_id = p.product_id ";
+		$sql .= "JOIN " . DB_PREFIX . "product p ON (op.product_id = p.product_id " . $combined_sql . ") ";
 		$sql .= "LEFT JOIN " . DB_PREFIX . "order_option opt ON opt.order_product_id = op.order_product_id ";
 		$sql .= "LEFT JOIN " . DB_PREFIX . "product_option_value pov ON pov.product_option_value_id = opt.product_option_value_id ";
 		$sql .= "WHERE op.order_id = " . (int)$order_id . " ";
@@ -40,7 +108,7 @@ class Order extends \Bling\Opencart\Base {
 				if (!isset($result[$row['order_product_id']])) {
 					$result[$row['order_product_id']] = $row;
 				}
-				
+					
 				// sobrescreve o sku com opcional, se houver
 				if (!empty($row['option_sku'])) {
 					$result[$row['order_product_id']]['sku'] = $row['option_sku'];
