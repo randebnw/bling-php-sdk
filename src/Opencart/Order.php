@@ -53,7 +53,7 @@ class Order extends \Bling\Opencart\Base {
 			$sql = "SELECT op.*, opv.parent_option_id, opv.parent_option_value_id, ";
 			$sql .= "opv.child_option_id, opv.child_option_value_id, od.model AS sku ";
 			$sql .= "FROM " . DB_PREFIX . "order_product op ";
-			$sql .= "JOIN " . DB_PREFIX . "tdo_option_value opv ON (opv.product_id = op.product_id AND op.tdo_id > 0) ";
+			$sql .= "JOIN " . DB_PREFIX . "tdo_option_value opv ON (opv.id = op.tdo_id AND op.tdo_id > 0) ";
 			$sql .= "JOIN " . DB_PREFIX . "tdo_data od ON od.tdo_id = opv.id ";
 			$sql .= "WHERE op.order_id = " . (int)$order_id . " ";
 			$query = $this->db->query($sql);
