@@ -40,7 +40,7 @@ class Contato extends Bling {
         	$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'contato'], true, 'UTF-8');
             $request = $this->configurations['guzzle']->post(
                 'contato/json/',
-                ['query' => ['xml' => $xml]]
+                ['body' => ['xml' => $xml]]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response) && isset($response['retorno']['contatos']['contato']['id'])) {

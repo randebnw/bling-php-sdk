@@ -190,7 +190,7 @@ class Converter {
     		
     		$data['inscricao_estadual'] = trim($data['inscricao_estadual']);
     		$cliente['ie_rg'] = $data['inscricao_estadual'] ? strtoupper($data['inscricao_estadual']) : \Bling\Resources\Contato::IE_ISENTO;
-    		$cliente['contribuinte'] = $data['inscricao_estadual'] ? \Bling\Resources\Contato::CONTRIBUINTE : \Bling\Resources\Contato::CONTRIBUINTE_ISENTO;
+    		$cliente['contribuinte'] = ($data['inscricao_estadual'] && $cliente['ie_rg'] != \Bling\Resources\Contato::IE_ISENTO) ? \Bling\Resources\Contato::CONTRIBUINTE : \Bling\Resources\Contato::CONTRIBUINTE_ISENTO;
     	}
     	 
     	$cliente['fone'] = $data['telephone'];
@@ -235,8 +235,10 @@ class Converter {
     		$cliente['nome'] = $data['razao_social'];
     		$cliente['tipoPessoa'] = \Bling\Resources\Contato::PESSOA_JURIDICA;
     		$cliente['cpf_cnpj'] = $data['cnpj'];
-    		$cliente['ie'] = $data['inscricao_estadual'] ? $data['inscricao_estadual'] : \Bling\Resources\Contato::IE_ISENTO;
-     		$cliente['contribuinte'] = $data['inscricao_estadual'] ? \Bling\Resources\Contato::CONTRIBUINTE : \Bling\Resources\Contato::CONTRIBUINTE_ISENTO;
+    		
+    		$data['inscricao_estadual'] = trim($data['inscricao_estadual']);
+    		$cliente['ie'] = $data['inscricao_estadual'] ? strtoupper($data['inscricao_estadual']) : \Bling\Resources\Contato::IE_ISENTO;
+     		$cliente['contribuinte'] = ($data['inscricao_estadual'] && $cliente['ie'] != \Bling\Resources\Contato::IE_ISENTO) ? \Bling\Resources\Contato::CONTRIBUINTE : \Bling\Resources\Contato::CONTRIBUINTE_ISENTO;
     	}
     	
     	$cliente['endereco'] = trim($data['payment_address_1']);
