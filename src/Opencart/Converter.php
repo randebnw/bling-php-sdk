@@ -68,7 +68,7 @@ class Converter {
         
         if ($sync_stock && !$has_options && $storage_id) {
         	$bling_data['deposito']['id'] = $storage_id;
-        	$bling_data['deposito']['estoque'] = $data['storage']['quantity'];
+        	$bling_data['deposito']['estoque'] = $data['quantity'];
         }
         
         if (isset($data['ean'])) {
