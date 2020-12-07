@@ -66,6 +66,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 	private $sync_brand;
 	
 	private $new_products = 0;
+	private $created = false;
 	private $has_combined_options = false;
 	
 	private static $instance;
@@ -96,6 +97,20 @@ class OpencartClient extends \Bling\Opencart\Base {
 		}
 		
 		return self::$instance;
+	}
+	
+	/**
+	 * 
+	 * @param string $sku
+	 * @return boolean
+	 */
+	public function productExists($sku) {
+		$sku = trim($sku);
+		if (is_null($this->map_product)) {
+			$this->initMaps();
+		}
+		
+		return isset($this->map_product[$sku]);
 	}
 	
 	public function initMaps() {
@@ -171,6 +186,8 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 * @param unknown $item
 	 */
 	public function importProduct($item) {
+		$this->created = false;
+		
 		if (is_null($this->map_product)) {
 			$this->initMaps();
 		}
@@ -339,6 +356,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 			// INSERT
 			$product_id = $this->model_product->insert($item);
 			if ($product_id) {
+				$this->created = true;				
 				$this->new_products++;
 				$this->map_product[$item['sku']] = $product_id;
 			}
@@ -491,6 +509,14 @@ class OpencartClient extends \Bling\Opencart\Base {
 	 */
 	public function getNewProducts() {
 		return $this->new_products;
+	}
+	
+	/**
+	 * 
+	 * @return boolean
+	 */
+	public function isCreated() {
+		return $this->created;
 	}
 	
 	/**
