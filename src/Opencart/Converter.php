@@ -30,6 +30,7 @@ class Converter {
     	$sync_brand = $config->get('bling_api_sync_brand');
     	$sync_stock = $config->get('bling_api_sync_stock');
     	$default_unit = $config->get('bling_api_unit');
+    	$has_options = isset($data['options']) && count($data['options']) > 0;
     	
         $bling_data = [];
         $bling_data['codigo'] = $data['sku'];
@@ -61,12 +62,12 @@ class Converter {
         	$bling_data['descricaoCurta'] = html_entity_decode($data['mini_description'], ENT_QUOTES, 'UTF-8');
         }
         
-        if (isset($data['quantity']) && $sync_stock) {
+        if (isset($data['quantity']) && $sync_stock && !$has_options && !$storage_id) {
         	$bling_data['estoque'] = $data['quantity'];
         }
         
-        if (isset($data['storage']) && is_array($data['storage']) && $sync_stock) {
-        	$bling_data['deposito']['id'] = $data['storage']['bling_id'];
+        if ($sync_stock && !$has_options && $storage_id) {
+        	$bling_data['deposito']['id'] = $storage_id;
         	$bling_data['deposito']['estoque'] = $data['storage']['quantity'];
         }
         
