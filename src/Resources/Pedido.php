@@ -30,6 +30,7 @@ class Pedido extends Bling {
     public function createPedido(array $data) {
     	$numero = '';
         try {
+        	\Bling\Util\Log::debug(json_encode($data));
         	$xml = \Bling\Util\ArrayToXml::convert($data, ['rootElementName' => 'pedido'], true, 'UTF-8');
         	$request = $this->configurations['guzzle']->post(
                 'pedido/json/',
