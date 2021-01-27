@@ -128,7 +128,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 			if ($this->sync_brand) {
 				$manufacturers = $this->model_manufacturer->get_all();
 				foreach ($manufacturers as $item) {
-					$this->map_manufacturer[$item['bling_id']] = $item['manufacturer_id'];
+					$this->map_manufacturer[$item['name']] = $item['manufacturer_id'];
 				}
 			}
 			
@@ -230,20 +230,20 @@ class OpencartClient extends \Bling\Opencart\Base {
 		
 		if ($this->sync_brand) {
 			// importa fabricante se ainda nao existir
-			if (isset($item['manufacturer']) && !isset($this->map_manufacturer[$item['manufacturer']])) {
-				if ($manufacturer_id = $this->model_manufacturer->insert($item['manufacturer'])) {
-					$this->map_manufacturer[$item['manufacturer']['id']] = $manufacturer_id;
-				} else {
-					$this->error = 'Erro ao importar fabricante ' . $item['manufacturer']['id'];
-					\Bling\Util\Log::error($this->error);
-					throw new \Exception($this->error);
-				}
-			}
-			
-			$item['manufacturer_id'] = 0;
-			if (isset($item['manufacturer']['id'], $this->map_manufacturer[$item['manufacturer']['id']])) {
-				$item['manufacturer_id'] = $this->map_manufacturer[$item['manufacturer']['id']];
-			}	
+		    if (isset($item['manufacturer']) && !isset($this->map_manufacturer[$item['manufacturer']])) {
+		        if ($manufacturer_id = $this->model_manufacturer->insert($item['manufacturer'])) {
+		            $this->map_manufacturer[$item['manufacturer']] = $manufacturer_id;
+		        } else {
+		            $this->error = 'Erro ao importar fabricante ' . $item['manufacturer'];
+		            \Bling\Util\Log::error($this->error);
+		            throw new \Exception($this->error);
+		        }
+		    }
+		    
+		    $item['manufacturer_id'] = 0;
+		    if (isset($item['manufacturer'], $this->map_manufacturer[$item['manufacturer']])) {
+		        $item['manufacturer_id'] = $this->map_manufacturer[$item['manufacturer']];
+		    }
 		}
 		
 		if (isset($item['options'])) {

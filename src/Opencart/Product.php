@@ -175,7 +175,7 @@ class Product extends \Bling\Opencart\Base {
 		// DADOS GERAIS
 		$sql = "UPDATE " . DB_PREFIX . "product ";
 		$sql .= "SET sku = '" . $this->db->escape($data['sku']) . "', ";
-		$sql .= "ean = '" . $this->db->escape($data['ean']) . "', ";
+		$sql .= "upc = '" . $this->db->escape($data['upc']) . "', ";
 		
 		if ($this->sync_brand) {
 			$sql .= "manufacturer_id = '" . (int)$data['manufacturer_id'] . "', ";

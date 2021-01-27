@@ -71,8 +71,8 @@ class Converter {
         	$bling_data['deposito']['estoque'] = $data['quantity'];
         }
         
-        if (isset($data['ean'])) {
-        	$bling_data['gtin'] = $data['ean'];
+        if (isset($data['upc'])) {
+        	$bling_data['gtin'] = $data['upc'];
         }
         
         if (isset($data['width'])) {
@@ -359,9 +359,10 @@ class Converter {
     	
     	// trata campos exclusivos de produto e que nao existem para servicos
     	if (!\Bling\Resources\Produto::isServico($data['tipo'])) {
-    		$oc_data['quantity'] = $data['estoqueAtual'];
+    	    // se tem opcionais, entao nao tem estoque direto no produto
+    	    $oc_data['quantity'] = isset($data['opcionais']) ? 0 : $data['estoqueAtual'];
     		$oc_data['weight'] = $data['pesoBruto'];
-    		$oc_data['ean'] = $data['gtin'];
+    		$oc_data['upc'] = $data['gtin'];
     		$oc_data['weight_class_id'] = $weight_lib->getIdByUnit('kg');
     		
     		$oc_data['width'] = $data['larguraProduto'];
@@ -379,7 +380,7 @@ class Converter {
     	} else {
     		$oc_data['quantity'] = 999;
     		$oc_data['weight'] = 0;
-    		$oc_data['ean'] = '';
+    		$oc_data['upc'] = '';
     		$oc_data['width'] = 0;
     		$oc_data['height'] = 0;
     		$oc_data['length'] = 0;
@@ -445,7 +446,7 @@ class Converter {
     		}
     	}
     	
-    	$empty_fields = ['model', 'upc', 'jan', 'isbn', 'mpn', 'location', 'minimum', 'points', 'sort_order', 'tax_class_id'];
+    	$empty_fields = ['model', 'ean', 'jan', 'isbn', 'mpn', 'location', 'minimum', 'points', 'sort_order', 'tax_class_id'];
     	foreach ($empty_fields as $item) {
     		$oc_data[$item] = '';
     	}

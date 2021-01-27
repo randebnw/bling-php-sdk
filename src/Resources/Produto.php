@@ -23,6 +23,7 @@ class Produto extends Bling {
 	
 	const TIPO_DATA_INCLUSAO = 'dataInclusao';
 	const TIPO_DATA_ALTERACAO = 'dataAlteracao';
+	const TIPO_SKU_PRODUTO = 'codigo';
 	
 	const FILTRO_ATIVO = 'A';
 	const FILTRO_INATIVO = 'I';
