@@ -431,13 +431,13 @@ class Product extends \Bling\Opencart\Base {
 		$sql = "SELECT product_id FROM " . DB_PREFIX . "product WHERE sku = '" . $this->db->escape($sku) . "'";
 		$product = $this->db->query($sql);
 		$success = false;
+		$product_id = 0;
 		if (isset($product->row['product_id'])) {
 			// eh produto comum, atualiza o estoque principal
 			$sql = "UPDATE " . DB_PREFIX . "product SET quantity = " . (int) $quantity . ", api_modified = NOW() WHERE product_id = " . (int) $product->row['product_id'];
 			$this->db->query($sql);
 			
-			$this->_autoSumStock($product->row['product_id']);
-			
+			$product_id = (int) $product->row['product_id'];
 			$success = true;
 		} else {
 			// se nao, entao pode ser um opcional
@@ -447,9 +447,20 @@ class Product extends \Bling\Opencart\Base {
 				$sql = "UPDATE " . DB_PREFIX . "product_option_value SET quantity = " . (int) $quantity . " WHERE option_sku = '" . $this->db->escape($sku) . "'";
 				$this->db->query($sql);
 				
-				$this->_autoSumStock($product->row['product_id']);
+				$product_id = (int) $product->row['product_id'];
 				$success = true;
 			}
+		}
+		
+		if ($success) {
+		    $combined = false;
+		    if ($this->has_combined_options) {
+		        $sql = "SELECT COUNT(*) AS num FROM " . DB_PREFIX . "tdo_data WHERE product_id = " . (int) $product_id;
+		        $result = $this->db->query($sql);
+		        $combined = isset($result->row['num']) ? ($result->row['num'] > 0) : false;
+		    }
+		    
+		    $this->_autoSumStock($product_id, $combined);
 		}
 		
 		return $success;
