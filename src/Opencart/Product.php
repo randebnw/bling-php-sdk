@@ -475,11 +475,13 @@ class Product extends \Bling\Opencart\Base {
 	private function _autoSumStock($product_id, $is_combined) {
 		if ($this->auto_sum_stock) {
 			$stock_table = 'product_option_value';
+			$subtract = " AND subtract = 1 ";
 			if ($is_combined && $this->has_combined_options) {
 				$stock_table = 'tdo_data';
+				$subtract = '';
 			}
 			
-			$sql = "SELECT SUM(quantity) AS total FROM " . DB_PREFIX . $stock_table . " WHERE product_id = " . (int) $product_id;
+			$sql = "SELECT SUM(quantity) AS total FROM " . DB_PREFIX . $stock_table . " WHERE product_id = " . (int) $product_id . " " . $subtract;
 			$result = $this->db->query($sql);
 			
 			// o estoque soh sera atualizado se o produto realmente tiver opcionais do tipo "escolha"
