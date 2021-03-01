@@ -117,14 +117,14 @@ class Produto extends Bling {
         }
     }
     
-    public function getProdutos($loja, $situacao = '', $page = 1, $imagem = false) {
+    public function getProdutos($situacao = '', $page = 1, $imagem = false) {
     	try {
     		$filters = '';
     		if ($situacao) {
     			$filters = 'situacao[' . $situacao . ']';
     		}
     		
-    		$query = ['filters' => $filters, 'loja' => $loja, 'estoque' => 'S'];
+    		$query = ['filters' => $filters, 'estoque' => 'S'];
     		if ($imagem) {
 				$query['imagem'] = 'S';
 			}
@@ -223,12 +223,12 @@ class Produto extends Bling {
      * @param boolean $imagem
      * @return mixed|boolean
      */
-    public function getProdutosPorDataInclusao($loja, $dataInicio, $dataFim, $page = 1, $imagem = false) {
-    	return $this->_getProdutosPorData($loja, $dataInicio, $dataFim, self::TIPO_DATA_INCLUSAO, $page, $imagem);
+    public function getProdutosPorDataInclusao($dataInicio, $dataFim, $page = 1, $imagem = false) {
+    	return $this->_getProdutosPorData($dataInicio, $dataFim, self::TIPO_DATA_INCLUSAO, $page, $imagem);
     }
     
-    public function getProdutosPorDataAlteracao($loja, $dataInicio, $dataFim, $page = 1, $imagem = false) {
-    	return $this->_getProdutosPorData($loja, $dataInicio, $dataFim, self::TIPO_DATA_ALTERACAO, $page, $imagem);
+    public function getProdutosPorDataAlteracao($dataInicio, $dataFim, $page = 1, $imagem = false) {
+    	return $this->_getProdutosPorData($dataInicio, $dataFim, self::TIPO_DATA_ALTERACAO, $page, $imagem);
     }
     
     /**
@@ -243,13 +243,13 @@ class Produto extends Bling {
      * @param boolean $imagem
      * @return mixed[]|boolean
      */
-	private function _getProdutosPorData($loja, $dataInicio, $dataFim, $tipoData, $page = 1, $imagem = false) {
+	private function _getProdutosPorData($dataInicio, $dataFim, $tipoData, $page = 1, $imagem = false) {
         try {
 			$list = [];
 			
 			// produtos ativos
 			$query = [
-				'loja' => $loja, 'estoque' => 'S', 
+				'estoque' => 'S', 
             	'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_ATIVO . ']'
 			];
 			if ($imagem) {
@@ -269,7 +269,7 @@ class Produto extends Bling {
 			
 			// produtos inativos
             $query = [
-            	'loja' => $loja, 'estoque' => 'S',
+            	'estoque' => 'S',
             	'filters' => $tipoData . '[' . $dataInicio . ' TO ' . $dataFim . ']; situacao[' . self::FILTRO_INATIVO . ']'
             ];
             if ($imagem) {
