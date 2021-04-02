@@ -101,11 +101,15 @@ class Produto extends Bling {
      * @return bool|array
      * @throws \Exception
      */
-    public function getProduto($codigo) {
+    public function getProduto($codigo, $loja = '') {
         try {
+            $query = ['imagem' => 'S', 'estoque' => 'S'];
+            if ($loja) {
+                $query['loja'] = $loja;
+            }
             $request = $this->configurations['guzzle']->get(
                 'produto/' . $codigo . '/json/',
-            	['query' => ['imagem' => 'S', 'estoque' => 'S']]
+            	['query' => $query]
             );
             $response = \json_decode($request->getBody()->getContents(), true);
             if ($response && is_array($response) && isset($response['retorno']['produtos'][0]['produto'])) {
