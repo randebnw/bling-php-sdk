@@ -362,7 +362,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 			}
 		}
 		
-		return true;
+		return $product_id;
 	}
 	
 	/**
