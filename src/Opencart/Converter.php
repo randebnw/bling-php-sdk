@@ -167,8 +167,8 @@ class Converter {
      * 
      * @author Rande A. Moreira
      * @since 21 de mai de 2020
-     * @param unknown $data
-     * @param unknown $address
+     * @param array $data
+     * @param array $address
      * @return string
      */
     public static function toBlingCustomer($data, $address) {
@@ -215,10 +215,10 @@ class Converter {
      * @author Rande A. Moreira
      * @since 21 de mai de 2020
      * @param array $data
-     * @param unknown $customer_info
-     * @param unknown $products
-     * @param unknown $order_totals
-     * @param unknown $config
+     * @param array $customer_info
+     * @param array $products
+     * @param array $order_totals
+     * @param Config $config
      */
     public static function toBlingOrder(array $data, $customer_info, $products, $order_totals, $config) {
     	$bling_data = array();
@@ -343,6 +343,9 @@ class Converter {
      * @param array $weight_lib
      */
     public static function toOpencartProduct(array $data, $config, $weight_lib) {
+        $storage_id = $config->get('bling_api_storage');
+        $has_options = isset($data['opcionais']) && count($data['opcionais']) > 0;
+        
     	$oc_data = [];
     	
     	$oc_data = [];
@@ -360,7 +363,21 @@ class Converter {
     	// trata campos exclusivos de produto e que nao existem para servicos
     	if (!\Bling\Resources\Produto::isServico($data['tipo'])) {
     	    // se tem opcionais, entao nao tem estoque direto no produto
-    	    $oc_data['quantity'] = isset($data['opcionais']) ? 0 : $data['estoqueAtual'];
+    	    $data['quantity'] = 0;
+    	    if (isset($data['estoqueAtual']) && !$has_options && !$storage_id) {
+    	        $data['quantity'] = $data['estoqueAtual'];
+    	    }
+    	    
+    	    if (!$has_options && $storage_id && isset($data['depositos'])) {
+    	        // se tiver configurado um deposito especifico, entao considera apenas o estoque desse deposito
+    	        foreach ($data['depositos'] as $storage) {
+    	            if ($storage['deposito']['id'] == $storage_id) {
+    	                $data['quantity'] = isset($storage['deposito']['saldoVirtual']) ? $storage['deposito']['saldoVirtual'] : $storage['deposito']['saldo'];
+    	            }
+    	        }
+    	    }
+    	    
+    	    
     		$oc_data['weight'] = $data['pesoBruto'];
     		$oc_data['upc'] = $data['gtin'];
     		$oc_data['weight_class_id'] = $weight_lib->getIdByUnit('kg');
@@ -459,8 +476,8 @@ class Converter {
      * @author Rande A. Moreira
      * @since 12 de mar de 2020
      * @param array $data
-     * @param unknown $config
-     * @param unknown $map_zones
+     * @param Config $config
+     * @param array $map_zones
      */
     public static function toOpencartCustomer(array $data, $config, $map_zones) {
     	$oc_data = [];
