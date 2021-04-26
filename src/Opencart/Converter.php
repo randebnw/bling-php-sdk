@@ -344,6 +344,7 @@ class Converter {
      */
     public static function toOpencartProduct(array $data, $config, $weight_lib) {
         $storage_id = $config->get('bling_api_storage');
+        $sync_brand = $config->get('bling_api_sync_brand');
         $has_options = isset($data['opcionais']) && count($data['opcionais']) > 0;
         
     	$oc_data = [];
@@ -415,7 +416,9 @@ class Converter {
     		}
     	}
     	
-    	$oc_data['manufacturer'] = trim($data['marca']);
+    	if (isset($data['marca']) && $data['marca'] && $sync_brand) {
+    	    $oc_data['manufacturer'] = trim($data['marca']);
+    	}
     	
     	if (isset($data['imagem']) && is_array($data['imagem'])) {
     		$oc_data['images'] = [];
