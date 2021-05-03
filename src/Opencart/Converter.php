@@ -364,16 +364,16 @@ class Converter {
     	// trata campos exclusivos de produto e que nao existem para servicos
     	if (!\Bling\Resources\Produto::isServico($data['tipo'])) {
     	    // se tem opcionais, entao nao tem estoque direto no produto
-    	    $data['quantity'] = 0;
+    	    $oc_data['quantity'] = 0;
     	    if (isset($data['estoqueAtual']) && !$has_options && !$storage_id) {
-    	        $data['quantity'] = $data['estoqueAtual'];
+    	        $oc_data['quantity'] = $data['estoqueAtual'];
     	    }
     	    
     	    if (!$has_options && $storage_id && isset($data['depositos'])) {
     	        // se tiver configurado um deposito especifico, entao considera apenas o estoque desse deposito
     	        foreach ($data['depositos'] as $storage) {
     	            if ($storage['deposito']['id'] == $storage_id) {
-    	                $data['quantity'] = isset($storage['deposito']['saldoVirtual']) ? $storage['deposito']['saldoVirtual'] : $storage['deposito']['saldo'];
+    	                $oc_data['quantity'] = isset($storage['deposito']['saldoVirtual']) ? $storage['deposito']['saldoVirtual'] : $storage['deposito']['saldo'];
     	            }
     	        }
     	    }
