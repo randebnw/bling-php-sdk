@@ -94,7 +94,7 @@ class Order extends \Bling\Opencart\Base {
 		// se tem o modulo instalado, entao na busca "normal" a gente traz só quem tiver tdo_id = 0
 		$combined_sql = $this->has_combined_options ? ' AND op.tdo_id = 0 ' : '';
 		
-		$sql = "SELECT op.*, p.sku, opt.name AS option_name, opt.value AS option_value, pov.option_sku ";
+		$sql = "SELECT op.*, p.sku, p.weight, p.weight_class_id, opt.name AS option_name, opt.value AS option_value, pov.option_sku ";
 		$sql .= "FROM " . DB_PREFIX . "order_product op ";
 		$sql .= "JOIN " . DB_PREFIX . "product p ON (op.product_id = p.product_id " . $combined_sql . ") ";
 		$sql .= "LEFT JOIN " . DB_PREFIX . "order_option opt ON opt.order_product_id = op.order_product_id ";
@@ -105,6 +105,7 @@ class Order extends \Bling\Opencart\Base {
 		$result = [];
 		if ($query->rows) {
 			foreach ($query->rows as $row) {
+			    $row['total_weight'] = $row['quantity'] * $this->weight->convertToKg($row['weight'], $row['weight_class_id']);
 				if (!isset($result[$row['order_product_id']])) {
 					$result[$row['order_product_id']] = $row;
 				}

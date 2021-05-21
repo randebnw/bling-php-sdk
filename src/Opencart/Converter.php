@@ -268,42 +268,11 @@ class Converter {
     		}
     	}
     	
-    	if ($has_shipping && $data['shipping_code']) {
-    		$transporte['transportadora'] = $data['shipping_company_name'];
-    		if ($data['is_correios']) {
-    			$volume['servico'] = $data['servico_correios'];
-    			$volumes = [];
-    			
-    			// envia codigos de rastreamento se houver
-    			if ($data['objects']) {
-    				$objects = explode(',', $data['objects']);
-    				foreach ($objects as $obj) {
-    					$volume['codigoRastreamento'] = $obj;
-    					$volumes[] = ['volume' => $volume];
-    				}
-    			} else {
-    				// se nao tiver, envia informacao de "volume" pra que o bling identifique a integracao de logistica, se necessario
-    				$volumes[] = ['volume' => $volume];
-    			}
-    			
-    			$transporte['volumes'] = $volumes;
-    		}
-    		
-    		$dados_etiqueta['nome'] = trim($data['shipping_firstname']) . ' ' . trim($data['shipping_lastname']);
-    		$dados_etiqueta['endereco'] = trim($data['shipping_address_1']);
-    		$dados_etiqueta['numero'] = trim($data['shipping_numero']);
-    		$dados_etiqueta['complemento'] = $data['shipping_complemento'];
-    		$dados_etiqueta['bairro'] = trim($data['shipping_address_2']);
-    		$dados_etiqueta['cep'] = $data['shipping_postcode'];
-    		$dados_etiqueta['municipio'] = trim($data['shipping_city']);
-    		$dados_etiqueta['uf'] = $data['shipping_uf'];
-    		$transporte['dados_etiqueta'] = $dados_etiqueta;
-    		
-    		$bling_data['transporte'] = $transporte;
-    	}
-    	
     	$bling_data['itens'] = [];
+    	$totalWeight = 0;
     	foreach ($products as $item) {
+    	    $totalWeight += $item['total_weight'];
+    	    
     		$bling_data['itens'][] = [
     			'item' => [
     				'codigo' => $item['sku'],
@@ -312,6 +281,47 @@ class Converter {
     				'vlr_unit' => $item['price']
     			] 
     		];
+    	}
+    	
+    	if ($has_shipping && $data['shipping_code']) {
+    	    $transporte['transportadora'] = $data['shipping_company_name'];
+    	    $transporte['peso_bruto'] = round($totalWeight, 3);
+    	    if ($data['is_correios']) {
+    	        $volume['servico'] = $data['servico_correios'];
+    	        $volumes = [];
+    	        
+    	        // envia codigos de rastreamento se houver
+    	        if ($data['objects']) {
+    	            $objects = explode(',', $data['objects']);
+    	            foreach ($objects as $obj) {
+    	                $volume['codigoRastreamento'] = $obj;
+    	                $volumes[] = ['volume' => $volume];
+    	            }
+    	        } else {
+    	            // se nao tiver, envia informacao de "volume" pra que o bling identifique a integracao de logistica, se necessario
+    	            $volumes[] = ['volume' => $volume];
+    	        }
+    	        
+    	        $transporte['volumes'] = $volumes;
+    	    } else {
+    	        // envia apenas o servico, pra que o bling identifique a integracao de logistica, se necessario
+    	        $volume['servico'] = $data['shipping_code'];
+    	        $volumes = [];
+    	        $volumes[] = ['volume' => $volume];
+    	        $transporte['volumes'] = $volumes;
+    	    }
+    	    
+    	    $dados_etiqueta['nome'] = trim($data['shipping_firstname']) . ' ' . trim($data['shipping_lastname']);
+    	    $dados_etiqueta['endereco'] = trim($data['shipping_address_1']);
+    	    $dados_etiqueta['numero'] = trim($data['shipping_numero']);
+    	    $dados_etiqueta['complemento'] = $data['shipping_complemento'];
+    	    $dados_etiqueta['bairro'] = trim($data['shipping_address_2']);
+    	    $dados_etiqueta['cep'] = $data['shipping_postcode'];
+    	    $dados_etiqueta['municipio'] = trim($data['shipping_city']);
+    	    $dados_etiqueta['uf'] = $data['shipping_uf'];
+    	    $transporte['dados_etiqueta'] = $dados_etiqueta;
+    	    
+    	    $bling_data['transporte'] = $transporte;
     	}
     	
     	$map_payment = $config->get('bling_api_map_payment');
