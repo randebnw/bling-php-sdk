@@ -128,6 +128,7 @@ class OpencartClient extends \Bling\Opencart\Base {
 			if ($this->sync_brand) {
 				$manufacturers = $this->model_manufacturer->get_all();
 				foreach ($manufacturers as $item) {
+				    $item['name'] = trim($item['name']);
 					$this->map_manufacturer[$item['name']] = $item['manufacturer_id'];
 				}
 			}

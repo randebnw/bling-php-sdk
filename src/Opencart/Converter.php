@@ -104,7 +104,7 @@ class Converter {
         }
         
         if (isset($data['manufacturer']) && ($sync_brand || $is_new)) {
-        	$bling_data['marca'] = $data['manufacturer'];
+        	$bling_data['marca'] = trim($data['manufacturer']);
         }
         
         if (isset($data['image']) || isset($data['images'])) {
